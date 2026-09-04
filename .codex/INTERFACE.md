@@ -33,7 +33,7 @@
 | `.codex/AGENTS.md` | Codex 自动加载**入口指引**（薄适配，指向 `.agents/` 权威源；非知识全量、非编译镜像） | 低频同步（共享源入口变化时） |
 | `.codex/INTERFACE.md` | 本文档：接口契约 | 双边 |
 | `.codex/SKILL.md` | codex-opencode-go 接入手册的 **Codex 侧镜像**（权威源在 `.agents/skills/codex-opencode-go/SKILL.md`；镜像自动生成或同步，不手改） | 同步 |
-| `.codex/agents/` | Codex 侧 agent：`unity-developer.toml` / `meta-developer.toml`（运行时角色适配，正文指向共享 AGENT.md）、`auto-developer/`、`exec-developer/`（角色文档） | 双边 |
+| `.codex/agents/` | Codex 运行时角色适配：`unity-developer.toml` / `meta-developer.toml`（正文指向共享 AGENT.md）；不再维护 exec/auto 替代 agent | 双边 |
 | `.codex/agents/unity-developer/`、`.codex/agents/meta-developer/` | 共享角色目录的只读相对软链；不承载 Codex 专属运行时适配 | 共享结构同步 |
 | `.codex/rules/`、`.codex/skills/`、`.codex/knowledge/`、`.codex/interfaces/` | 共享目录的只读相对软链；仅作 Codex 路径兼容别名 | 共享结构同步 |
 | `.codex/config.toml.bak-20260825` | 项目级 config 归档（退役，勿恢复） | — |
@@ -43,7 +43,7 @@
 ## 3. 派发约定（Claude → Codex）
 
 - 调用：`codex exec -C <项目根> --sandbox workspace-write --skip-git-repo-check "<prompt>"`（Claude 侧由 codex-orchestrate skill 执行）
-- 路由：落地执行类 → **exec-developer**（`.codex/agents/exec-developer/exec-developer.md`）；自主开发全流程 → **auto-developer**（`.codex/agents/auto-developer/auto-developer.md`）。**开发任务同样可派发 Codex**（不再限"基础重复工作"），派发时 prompt 中显式引用 agent 文件并附任务书字段（目标/涉及文件/约束/验收标准/模式）
+- 路由：默认使用共享 `unity-developer` 角色，体系维护使用共享 `meta-developer` 角色；模式在 prompt 中显式指定 Production / Research / Experiment。**开发任务同样可派发 Codex**，派发时显式引用 `.agents/agents/<role>/AGENT.md` 并附任务书字段（目标/涉及文件/约束/验收标准/模式）
 - prompt 要求：自包含（Codex 经根 AGENTS.md 读 `.agents/` 权威源——共享角色正文、rules/、references/——再按任务书执行）、明确输出格式、限定文件范围
 - 大任务（>2KB）：Claude 写任务书到 `/tmp/codex-task.md`，Codex 读取执行，避免上下文截断
 - 结果：stdout 即回报内容，改动经 Claude review（git diff）；涉及 `Assets/Mine/` 的改动经门禁链确认后合入

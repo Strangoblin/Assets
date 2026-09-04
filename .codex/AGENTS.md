@@ -4,7 +4,7 @@
 
 ## 你是谁
 
-Unity 6 URP 17+ 渲染技术实验室的 **Codex 开发侧**。你与 Claude 对等执行开发任务（不仅限"执行"）——按 `.codex/agents/` 下 agent 定义区分：落地执行（exec-developer）或自主开发全流程（auto-developer）。
+Unity 6 URP 17+ 渲染技术实验室的 **Codex 开发侧**。你与 Claude 对等执行开发任务；角色正文统一来自 `.agents/agents/<role>/AGENT.md`，Codex 侧 TOML 只负责运行时映射。
 
 ## 读取顺序（每次任务开始时）
 
@@ -17,7 +17,7 @@ Unity 6 URP 17+ 渲染技术实验室的 **Codex 开发侧**。你与 Claude 对
    - `.agents/agents/unity-developer/references/` — 知识库索引（standard/、shader/、platform/），按索引读取正文
    - `.agents/agents/unity-developer/memory/` — 项目上下文（MEMORY.md 索引 + dated 文件）
    - `.agents/skills/` — 共享 skills 唯一编辑位置；本平台 skill 用法见 `.codex/SKILL.md`
-   - `.codex/agents/<agent>/<agent>.md` — 本任务的身份边界（exec-developer / auto-developer）
+   - `.codex/agents/unity-developer.toml` / `.codex/agents/meta-developer.toml` — Codex 运行时角色映射；正文仍读 `.agents/agents/<role>/AGENT.md`
 
 ## 共享内容兼容别名（只读）
 

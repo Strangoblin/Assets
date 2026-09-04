@@ -71,6 +71,11 @@ CODEX_SHARED_LINKS = {
     ".codex/interfaces": "../.agents/interfaces",
 }
 
+CODEX_RETIRED_PATHS = (
+    ".codex/agents/auto-developer",
+    ".codex/agents/exec-developer",
+)
+
 
 def rel(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
@@ -229,6 +234,11 @@ def semantic_category(path: str) -> tuple[str, str, str, str]:
     return "unknown", path, "review", "No automated ownership rule applies."
 
 
+def codex_retired_path_errors() -> list[str]:
+    """Prevent the retired exec/auto replacement agents from returning."""
+    return [f"Retired Codex path still exists: {path}" for path in CODEX_RETIRED_PATHS if (ROOT / path).exists()]
+
+
 def codex_shared_link_errors() -> list[str]:
     """Require Codex compatibility paths to remain relative links into .agents."""
     errors: list[str] = []
@@ -248,6 +258,7 @@ def codex_shared_link_errors() -> list[str]:
 def phase2_contract() -> list[str]:
     """Validate the shared-core scaffold without requiring the later cutover."""
     errors: list[str] = []
+    errors.extend(codex_retired_path_errors())
     errors.extend(codex_shared_link_errors())
     missing = [path for path in PHASE2_REQUIRED if not (ROOT / path).is_file()]
     if missing:

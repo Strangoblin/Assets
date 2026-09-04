@@ -24,7 +24,6 @@
       "tests/**",
       "tmp/**",
       "agents/*.toml",
-      "agents/*/*.md",
       "agents/unity-developer",
       "agents/meta-developer",
       "rules",
@@ -32,7 +31,7 @@
       "knowledge",
       "interfaces"
     ],
-    "notes": "Codex runtime configuration, tests, hooks and temporary workspace remain platform-specific."
+    "notes": "Codex runtime configuration, tests, hooks and temporary workspace remain platform-specific; exec/auto replacement agents are retired."
   },
   "shared_target": {
     "root": ".agents",

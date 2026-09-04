@@ -48,14 +48,14 @@
 - `hooks/guard-bash.sh`、`settings.json`（+`settings.local.json` 本地 gitignored）— 平台配置，非共享内容。
 - 全层无断链（`find -L .claude -type l` 零输出）。
 
-### `.codex/`（Codex 适配层，35 tracked）
+### `.codex/`（Codex 适配层，33 tracked）
 
 - `AGENTS.md`、`INTERFACE.md` — 薄适配入口；`SKILL.md` — codex-opencode-go 接入手册。
 - `config.toml`（+bak）、`hooks.json` + `hooks/guard-bash.sh` — 平台配置。
-- `agents/` — 运行时薄适配：`unity-developer.toml`、`meta-developer.toml`（~40 行，正文指向共享 AGENT.md）；Codex 侧自举角色 `auto-developer/`、`exec-developer/`。
+- `agents/` — 运行时薄适配：`unity-developer.toml`、`meta-developer.toml`（~40 行，正文指向共享 AGENT.md）；不再维护 exec/auto 替代 agent。
 - `tests/01_smoke … 06_architecture` + `run_all.sh`；`06_architecture/verify.py` 契约扫描（默认 fixture `phase7` 闭包基线）。
 - `tmp/` — 工作文档，不入扫描与提交。
-- ⚠️ **进行中（另一 agent，未提交）**：目录级软链 `.codex/{agents/<role>,rules,skills,knowledge,interfaces}` → `.agents`，verify.py 增 `CODEX_SHARED_LINKS` 契约；权威记录见 dated memory `2026-09-04-codex-compatibility-links.md`，本文件不预写其细节。
+- 目录级软链 `.codex/{agents/<role>,rules,skills,knowledge,interfaces}` → `.agents` 已提交；`verify.py` 通过 `CODEX_SHARED_LINKS` 契约固定目标与断链检查。
 
 ### `.mcp/`（执行门禁，23 tracked）
 

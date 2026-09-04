@@ -25,7 +25,7 @@ description: Claude ↔ Codex 双边桥接接口（Claude 侧）。Codex 直接�
 └─────────────────────────────┘          └─────────────────────────────┘
 ```
 
-> **Codex 侧 agent**：`.codex/agents/exec-developer/`（落地执行）、`.codex/agents/auto-developer/`（自主开发全流程），由 codex-orchestrate 派发时在 prompt 中显式引用。
+> **Codex 侧角色**：`.codex/agents/unity-developer.toml` 与 `.codex/agents/meta-developer.toml` 是运行时薄适配；正文统一读取 `.agents/agents/<role>/AGENT.md`。由 codex-orchestrate 在 prompt 中显式指定共享角色与模式。
 
 ## 核心机制：Codex 如何读 `.agents`
 

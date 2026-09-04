@@ -21,7 +21,7 @@ Claude Code ──Bash──▶ codex exec --sandbox workspace-write "<任务>"
 
 Codex CLI 与 VSCode 扩展读同一个 `~/.codex/config.toml`，链路共用。
 
-> **执行路由**：派发即路由到 **exec-developer**（`.codex/agents/exec-developer/exec-developer.md`，纯执行边界，任务书字段必填）；用户要求自主全流程时路由到 **auto-developer**（`.codex/agents/auto-developer/auto-developer.md`）。
+> **执行路由**：派发时直接指定共享角色（默认 `.agents/agents/unity-developer/AGENT.md`；体系维护使用 `.agents/agents/meta-developer/AGENT.md`），并在 prompt 中说明 Production / Research / Experiment 模式。Codex 不再维护 exec/auto 替代 agent。
 
 > 🌍 **全局 skill**：本 skill 是全局的（`.agents/skills/`），任何项目可用。配置在 `~/.codex/`（config.toml + auth.json）也是全局的，无需每项目配置；codex exec 在未信任目录也能直接跑（自动 trust）。知识模型：Codex **直接读 `.agents/` 共享权威源**（入口指引在 .codex/AGENTS.md，结构变更时由 codex-bridge skill 更新）。
 
@@ -52,7 +52,7 @@ Codex CLI 与 VSCode 扩展读同一个 `~/.codex/config.toml`，链路共用。
 |------|------|
 | `.agents/` 体系变更（宪法/rules/agents/skills 修改） | 体系裁决归 Claude（meta-developer）；Codex 可读但不可改体系 |
 | 门禁裁决（Assets/Mine/ 合入） | Codex 无 MCP write_gated 通道；开发产出经 Claude review + 门禁链合入 |
-| 渲染管线/架构级方案决策 | 方案设计归 Claude/auto-developer 内部；Codex 按任务书落地 |
+| 渲染管线/架构级方案决策 | 方案设计由调用方与对应共享角色裁决；Codex 按任务书落地 |
 | 涉及外部服务的操作 | 发布、推送、部署 |
 
 ## 调用模板
@@ -61,7 +61,7 @@ Codex CLI 与 VSCode 扩展读同一个 `~/.codex/config.toml`，链路共用。
 
 ```bash
 codex exec --sandbox workspace-write --skip-git-repo-check \
-  "以 exec-developer 身份执行：具体、自包含的指令"
+  "读取 AGENTS.md 与 .agents/agents/unity-developer/AGENT.md，以 unity-developer 角色执行：具体、自包含的指令"
 ```
 
 ### 大任务（任务说明书，避免上下文截断）
@@ -79,13 +79,13 @@ EOF
 
 # 2. 派发
 codex exec --sandbox workspace-write --skip-git-repo-check \
-  "以 exec-developer 身份执行：先读 .codex/agents/exec-developer/exec-developer.md，再读取 /tmp/codex-task.md 按任务书约定完整执行。不要询问，直接完成。"
+  "先读 AGENTS.md、.agents/README.md 与 .agents/agents/unity-developer/AGENT.md，再读取 /tmp/codex-task.md 按任务书约定完整执行。不要询问，直接完成。"
 ```
 
 ### 指令书写要点
 
 - **自包含**：Codex 直接读 `.agents/` 权威源（入口指引 `.codex/AGENTS.md` 列清单：CLAUDE.md 宪法、rules/、references/）；关键约束仍须写进指令（命名规范、文件路径、验收标准）
-- **路由**：prompt 开头注明"以 exec-developer 身份执行"（纯执行边界）；大任务附 agent 文件路径 `.codex/agents/exec-developer/exec-developer.md`
+- **路由**：prompt 开头注明共享角色（默认 `unity-developer`，体系维护为 `meta-developer`）和模式；大任务附对应 `.agents/agents/<role>/AGENT.md` 路径
 - **明确边界**：列出允许修改的文件范围；未列出的不动
 - **要求自查**：末尾加"完成后列出修改的文件清单"
 
