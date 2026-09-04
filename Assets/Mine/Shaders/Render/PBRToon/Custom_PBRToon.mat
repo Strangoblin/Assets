@@ -50,7 +50,7 @@ Material:
     - _OutlineScale: 0.5
     - _RimRange: 0.5
     - _RimStrength: 0.5
-    - _Roughness: 1
+    - _Roughness: 0
     - _ToonRemap: 0.42
     - _ToonRimRange: 0.2
     - _ToonRoughness: 0.75

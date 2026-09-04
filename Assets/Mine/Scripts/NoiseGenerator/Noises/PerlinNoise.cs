@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Perlin noise implementation. Provides 3D Perlin noise with optional periodic tiling.
+/// Perlin noise implementation. Provides 3D Perlin noise.
 /// Call via NoiseGenerator — not intended for direct use.
 /// </summary>
 public static class PerlinNoise
@@ -73,52 +73,5 @@ public static class PerlinNoise
         float y2 = NoiseGenerator.Lerp(x3, x4, v);
 
         return NoiseGenerator.Lerp(y1, y2, w) * 0.5f + 0.5f;
-    }
-
-    /// <summary>Periodic (tileable) 3D Perlin noise. Repeat period in each axis.</summary>
-    public static float SamplePeriodic(float x, float y, float z, float scale, int period)
-    {
-        x *= scale;
-        y *= scale;
-        z *= scale;
-
-        int p = Mathf.Max(1, period);
-
-        float xw = NoiseGenerator.Repeat01(x / p) * p;
-        float yw = NoiseGenerator.Repeat01(y / p) * p;
-        float zw = NoiseGenerator.Repeat01(z / p) * p;
-
-        int X0 = Mathf.FloorToInt(xw) % p;
-        int Y0 = Mathf.FloorToInt(yw) % p;
-        int Z0 = Mathf.FloorToInt(zw) % p;
-
-        float xf = xw - Mathf.Floor(xw);
-        float yf = yw - Mathf.Floor(yw);
-        float zf = zw - Mathf.Floor(zw);
-        float u = Fade(xf);
-        float v = Fade(yf);
-        float w = Fade(zf);
-
-        int X1 = (X0 + 1) % p;
-        int Y1 = (Y0 + 1) % p;
-        int Z1 = (Z0 + 1) % p;
-
-        int AA = perm[(perm[(perm[X0] + Y0) % 256] + Z0) % 256];
-        int AB = perm[(perm[(perm[X0] + Y0) % 256] + Z1) % 256];
-        int BA = perm[(perm[(perm[X1] + Y0) % 256] + Z0) % 256];
-        int BB = perm[(perm[(perm[X1] + Y0) % 256] + Z1) % 256];
-        int AA1 = perm[(perm[(perm[X0] + Y1) % 256] + Z0) % 256];
-        int AB1 = perm[(perm[(perm[X0] + Y1) % 256] + Z1) % 256];
-        int BA1 = perm[(perm[(perm[X1] + Y1) % 256] + Z0) % 256];
-        int BB1 = perm[(perm[(perm[X1] + Y1) % 256] + Z1) % 256];
-
-        float x1 = NoiseGenerator.Lerp(Grad(AA, xf, yf, zf), Grad(BA, xf - 1, yf, zf), u);
-        float x2 = NoiseGenerator.Lerp(Grad(AB, xf, yf, zf - 1), Grad(BB, xf - 1, yf, zf - 1), u);
-        float y1 = NoiseGenerator.Lerp(x1, x2, w);
-        float x3 = NoiseGenerator.Lerp(Grad(AA1, xf, yf - 1, zf), Grad(BA1, xf - 1, yf - 1, zf), u);
-        float x4 = NoiseGenerator.Lerp(Grad(AB1, xf, yf - 1, zf - 1), Grad(BB1, xf - 1, yf - 1, zf - 1), u);
-        float y2 = NoiseGenerator.Lerp(x3, x4, w);
-
-        return NoiseGenerator.Lerp(y1, y2, v) * 0.5f + 0.5f;
     }
 }

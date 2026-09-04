@@ -4,6 +4,8 @@ paths:
 ---
 # Compute Shader 开发规范
 
+> 完整模板与错误表见 [references/shader/postprocess/compute-shader.md](../agents/unity-developer/references/shader/postprocess/compute-shader.md) + C# 侧 [references/standard/compute/compute-shader-api.md](../agents/unity-developer/references/standard/compute/compute-shader-api.md)
+
 ## Metal 兼容
 
 - `[numthreads(8,8,1)]` 推荐（64 线程/组），不要用 `(16,16,1)`

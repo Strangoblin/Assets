@@ -27,7 +27,7 @@ agents/<name>/
 name: <name>-developer
 description: <one-line>.
 tools: [Read, Write, Edit, Bash, Glob, Grep]
-model: opus
+model: inherit          # haiku | sonnet | opus | inherit（不写则继承主会话模型）
 ---
 
 # <Agent Name>

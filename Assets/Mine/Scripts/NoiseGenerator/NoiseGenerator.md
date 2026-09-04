@@ -1,8 +1,8 @@
 # NoiseGenerator — 程序化噪声纹理生成
 
-> 日期: 2026-06-25
+> 日期: 2026-09-03
 > 路径: `Assets/Mine/Scripts/NoiseGenerator/`
-> 依赖: Unity 6, Editor Coroutine (for EditorWindow)
+> 依赖: Unity 6
 
 ---
 
@@ -23,15 +23,15 @@
 
 | 文件 | 类 | 职责 |
 |---|---|---|
-| `NoiseGenerator.cs` | `NoiseGenerator` (static) | 外观入口：纹理生成、采样调度、平铺处理、共享工具 |
-| `Noises/PerlinNoise.cs` | `PerlinNoise` (static) | Perlin 3D 噪声核心：perm 表、梯度插值、周期变体 |
-| `Noises/VoronoiNoise.cs` | `VoronoiNoise` (static) | Voronoi 3D 噪声核心：特征点哈希、距离计算、周期变体 |
+| `NoiseGenerator.cs` | `NoiseGenerator` (static) | 外观入口：纹理生成、无缝平铺、通道打包、共享工具 |
+| `Noises/PerlinNoise.cs` | `PerlinNoise` (static) | Perlin 3D 噪声核心：perm 表、梯度插值 |
+| `Noises/VoronoiNoise.cs` | `VoronoiNoise` (static) | Voronoi 3D 噪声核心：特征点哈希、距离计算 |
 
 ### Editor
 
 | 文件 | 类 | 职责 |
 |---|---|---|
-| `Assets/Editor/NoiseGeneratorWindow.cs` | `NoiseGeneratorWindow : EditorWindow` | 可视化面板：参数调节、实时预览、资源保存 |
+| `Editor/NoiseGeneratorWindow.cs` | `NoiseGeneratorWindow : EditorWindow` | 可视化面板：参数调节、hash 缓存预览、资源保存 |
 
 ---
 
@@ -39,21 +39,20 @@
 
 ```
 NoiseGenerator (facade)
-├── NoiseType enum   → Perlin / Voronoi
-├── 纹理生成          → Generate3DTexture / GenerateChannelTexture / Generate2DSliceTexture
-├── 无缝平铺          → MakeSeamless2D / MakeSeamless3D
-├── 采样入口          → Sample3D → SampleTileable3D → SampleBaseNoise
+├── NoiseType enum    → Perlin / Voronoi
+├── 纹理生成          → Generate3DTexture / GenerateChannelTexture / PackChannels
+├── 无缝平铺          → MakeSeamless2D / MakeSeamless3D（边界拷贝闭合）
+├── 采样入口          → Sample3D → SampleTileable3D / SampleBaseNoise
 ├── 共享工具          → Repeat01 / Lerp / Seed01
 │
-├── PerlinNoise       → Sample(x,y,z,scale) / SamplePeriodic(x,y,z,scale,period)
+├── PerlinNoise       → Sample(x,y,z,scale)
 │   ├── perm[512]     ← 标准排列表
 │   ├── Fade(t)       ← 6t⁵-15t⁴+10t³ 平滑曲线
 │   └── Grad(hash, x, y, z) ← 梯度向量点积
 │
-└── VoronoiNoise      → Sample(x,y,z,scale) / SamplePeriodic(x,y,z,scale,period)
+└── VoronoiNoise      → Sample(x,y,z,scale)
     ├── Hash01        ← 3D 整数哈希 → [0,1)
-    ├── FeaturePoint  ← 单元格内随机特征点
-    └── PositiveMod   ← 正模运算（支持负数）
+    └── FeaturePoint  ← 单元格内随机特征点
 ```
 
 ### 数据流
@@ -61,12 +60,15 @@ NoiseGenerator (facade)
 ```
 调用方
   → NoiseGenerator.Generate3DTexture(size, scale, seamless, noiseType)
-    → 遍历 [x,y,z] → Sample3D(wx, wy, wz, scale, period, seamless, type)
+    → 遍历 [x,y,z] → Sample3D(wx, wy, wz, scale, seamless, noiseType)
       ├─ seamless=false → PerlinNoise.Sample / VoronoiNoise.Sample
       └─ seamless=true  → SampleTileable3D（四维8点插值→消除接缝）
-                            → SampleBaseNoise → PerlinNoise.Sample / VoronoiNoise.Sample
     → MakeSeamless3D（最后一行/列/层从对侧拷贝，闭合周期）
     → Texture3D.SetPixels + Apply
+
+通道打包
+  → NoiseGenerator.PackChannels(Texture2D[] sources, int resolution)
+    → 逐像素 GetPixelBilinear 采样各通道 R → RGBA 输出
 ```
 
 ---
@@ -96,19 +98,15 @@ Texture2D tex = NoiseGenerator.GenerateChannelTexture(
 );
 ```
 
-### Texture2D 生成（多通道 RGBA，从 3D 体切片）
+### Texture2D 生成（多通道 RGBA 打包）
 
 ```csharp
-Texture2D tex = NoiseGenerator.Generate2DSliceTexture(
-    resolution: 256,
-    channels: 4,          // 1–4 通道输出
-    sliceStart: 0.1f,     // Y 起始位置
-    sliceDistance: 0.25f, // 通道间 Y 间距
-    scale: 4f,
-    period: 256,
-    seamless: true,
-    noiseType: NoiseGenerator.NoiseType.Perlin
-);
+// 各通道独立生成（可不同噪声类型/种子），再打包为 RGBA
+var r = NoiseGenerator.GenerateChannelTexture(128, 4f, true, NoiseGenerator.NoiseType.Perlin, 0f);
+var g = NoiseGenerator.GenerateChannelTexture(128, 8f, true, NoiseGenerator.NoiseType.Voronoi, 7f);
+Texture2D packed = NoiseGenerator.PackChannels(new[] { r, g }, 128);
+// 最多 4 个来源 → R/G/B/A；来源为 null 时该通道为 0
+// 各通道分辨率可低于输出：低分辨率来源在目标分辨率下双线性重采样，保留低频观感
 ```
 
 ### 原始采样
@@ -117,8 +115,7 @@ Texture2D tex = NoiseGenerator.Generate2DSliceTexture(
 float value = NoiseGenerator.Sample3D(
     x: 0.5f, y: 0.3f, z: 0.8f,
     scale: 4f,
-    period: 256,        // 无缝平铺的周期
-    seamless: false,
+    seamless: true,
     noiseType: NoiseGenerator.NoiseType.Perlin
 );
 // 返回值 ∈ [0, 1]
@@ -145,13 +142,6 @@ float value = NoiseGenerator.Sample3D(
 - **搜索邻域**：包含自身在内的 3×3×3 共 27 个格点
 - **距离度量**：欧几里得距离
 - **输出值域**：`[0, 1]`（`1 − clamp(minDist, 0, 1)`，靠近特征点 = 0，远离 = 1）
-
-### 周期（无缝）变体
-
-两种噪声的无缝变体通过坐标包装实现，使噪声图案在 `[0, period)` 范围内无缝重复：
-
-- **PerlinPeriodic**：坐标映射到 `[0, period)` 范围，利用周期模运算访问排列表，梯度插值正常进行
-- **VoronoiPeriodic**：坐标映射到 `[0, period)` 范围，特征点搜索时使用 `PositiveMod` 进行周期包装，距离计算使用最小镜像距离
 
 ---
 
@@ -189,7 +179,6 @@ float value = NoiseGenerator.Sample3D(
 | `seamless` | bool | true | 是否无缝平铺 |
 | `noiseType` | NoiseType | Perlin | 噪声算法选择 |
 | `randomSeed` | float | 0 | 随机种子，控制 3D 体中采样的 Y 切片位置 |
-| `channels` | int | 4 | RGBA 通道数，范围 [1, 4] |
 
 ---
 
@@ -198,10 +187,10 @@ float value = NoiseGenerator.Sample3D(
 ### 通过 Editor 窗口
 
 1. 菜单栏：`Tools → Noise Generator...`
-2. 切换输出模式 `Texture3D` / `Texture2D`
-3. 调整参数（噪声类型、分辨率、缩放、无缝选项）
-4. 点击 `Generate` 预览效果
-5. 设置输出路径，点击 `Save` 将 .asset 写入项目
+2. 顶部切换输出模式 `Texture3D` / `Texture2D`
+3. 调整参数（噪声类型、分辨率、缩放、无缝选项；2D 模式逐通道卡片独立调整，支持 `Randomize` 种子）
+4. 点击 `Generate` 预览——预览带 hash 缓存，参数未变时拖动 Slice 不重复生成
+5. 设置输出路径（默认 `Assets/Mine/Noises/Noise3D.asset` / `Noise2D.asset`），点击 `Save` 写入项目；路径已存在时弹覆盖确认
 
 ### 通过代码
 
@@ -214,8 +203,11 @@ var noise3D = NoiseGenerator.Generate3DTexture(32, 4f, true, NoiseGenerator.Nois
 // 生成 2D Voronoi 无缝纹理
 var noise2D = NoiseGenerator.GenerateChannelTexture(512, 8f, true, NoiseGenerator.NoiseType.Voronoi, 0.5f);
 
-// 对 Shader 中的 custom 体积噪声进行手动采样
-float n = NoiseGenerator.Sample3D(uv.x, uv.y, uv.z, 4f, 256, true, NoiseGenerator.NoiseType.Perlin);
+// 四通道打包（R 法线细节 / G 粗糙度 / B 高度）
+var packed = NoiseGenerator.PackChannels(new[] { channelR, channelG, channelB }, 512);
+
+// 对 Shader 中的体积噪声进行手动采样
+float n = NoiseGenerator.Sample3D(uv.x, uv.y, uv.z, 4f, true, NoiseGenerator.NoiseType.Perlin);
 ```
 
 ### 常见用途

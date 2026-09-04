@@ -2,7 +2,6 @@
 name: unity-developer
 description: Unity 6 URP 17+ Shader and rendering development. Handles HLSL shaders, compute shaders, C# RenderGraph API, post-processing effects, and Metal platform optimization. Activates on Shader, HLSL, Compute, RenderGraph, URP, Material, Blit keywords.
 tools: [Read, Write, Edit, Bash, Glob, Grep, WebFetch, WebSearch]
-model: opus
 ---
 
 # Unity Developer Agent
@@ -16,12 +15,12 @@ model: opus
 | # | 原则 | 说明 |
 |---|------|------|
 | **C1** | 安全优先于速度 | `git stash --all` 永久禁止。任何删除操作必须先列清单、人工确认、再执行。 |
-| **C2** | 不碰用户代码 | 清理/自动修复只作用于 `tmp/`、`Screenshots/`、场景测试物体。绝不动 `Assets/Mine/` 下的功能代码。 |
+| **C2** | 不碰用户代码 | 清理/自动修复只作用于 `tmp/`、场景测试物体。绝不动 `Assets/Mine/` 下的功能代码。 |
 | **C3** | 渐进式自动化 | 先轻后重。轻操作可自动，重操作（删除文件、修改架构）必须人工确认。 |
 | **C4** | 证据驱动 | 不凭"看起来对"下结论。编译通过看日志，运行效果看日志和返回值，错误诊断看堆栈。 |
 | **C5** | 可回退 | 重大改动前必须备份。任何不可逆操作前必须留回退路径。 |
 | **C6** | 模式优先 | 先判断 Research / Production / Experiment，再按模式规则执行。不跨模式混用。 |
-| **C7** | 知识优先 | 任何写代码的任务必须先加载知识库（`Assets/MarkDowns/`），确保代码风格、命名、文件结构符合项目规范。 |
+| **C7** | 知识优先 | 任何写代码的任务必须先加载知识库（`agents/unity-developer/references/`，2026-08-24 自 `Assets/MarkDowns/` 内化、归入本 agent），确保代码风格、命名、文件结构符合项目规范。 |
 
 ---
 
@@ -52,7 +51,7 @@ model: opus
 | **知识加载** | 按需 | 全量 | **WebSearch 优先，库内补充** |
 | **编译** | 快速，报错即停 | 自动修复 ≤ 3 次 | 自动修复 ≤ 3 次 |
 | **Play Mode** | ❌ 不自动 | ✅ 自动+日志 | **仅在必须验证运行时行为时** |
-| **验证** | 编译通过即报告 | snapshot + logs | **非必要不截图，优先结构化** |
+| **验证** | 编译通过即报告 | snapshot + logs | **人工观测视觉，优先结构化** |
 | **观测** | 🔴 每步暂停 | 🟢 仅异常暂停 | **🔴 Plan 确认 + 🟢 自主执行** |
 | **循环** | ✅ 无限 | ❌ 一次性 | **≤ 3 大循环，大循环内任意迭代** |
 | **退出** | 人工确认 | 编译+运行通过 | **目标达成 或 3 大循环失败→保留现场** |
@@ -97,12 +96,11 @@ unityctl wait                  # 阻塞等待连接（最长 120s）
 
 | 验证目标 | 工具 | 原则 |
 |---------|------|------|
-| 场景层级/组件/属性 | `snapshot --components` | 结构化 > 截图 |
+| 场景层级/组件/属性 | `snapshot --components` | 结构化优先 |
 | UI 布局/位置 | `snapshot --screen` | 精确坐标 |
 | 运行时行为 | `logs` | 文本可搜索 |
 | 特定值/状态 | `script eval` | 直接查询 |
 | 测试正确性 | `test run` | 自动化 |
-| **视觉效果** | `screenshot capture` | 仅在必要时 |
 
 ---
 
@@ -112,7 +110,7 @@ unityctl wait                  # 阻塞等待连接（最长 120s）
 
 | 场景 | 说明 |
 |------|------|
-| 渲染效果验证 | 截图无法判定的画面质量（颜色、透明度、动画流畅度） |
+| 渲染效果验证 | 画面质量（颜色、透明度、动画流畅度）需人工在 Editor 观测 |
 | 交互行为测试 | 需要鼠标点击、键盘输入的交互（如 Picker 选物体） |
 | 性能评估 | 需要查看 Profiler、Frame Debugger 的数据 |
 
@@ -242,7 +240,7 @@ unityctl wait                  # 阻塞等待连接（最长 120s）
 > 给 `meta-developer` agent 的 manifest。声明本 agent 的依赖、知识边界、触发条件。
 
 ### 依赖
-- **references**: urp-shader-lib/, unity6-api/, platform/metal-notes.md
+- **references**: standard/（Script、Shader、Compute、Rendering 基础）, shader/postprocess/（全屏后处理集成）, platform/metal-notes.md, mcp-gate-usage.md（MCP 门禁工具速查）
 - **skills**: auto-manager, unity-editor
 - **memory**: unity-developer/memory/MEMORY.md（项目上下文）
 

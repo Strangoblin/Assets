@@ -1,4 +1,4 @@
-"""G2: 脚本决策 — USE 已有 / CREATE reusable / CREATE tmp.
+"""G2: 脚本决策 — USE 已有 / CREATE reusable / CREATE tmp / NONE 无脚本任务.
 
 依赖: validation/script_library
 """
@@ -13,6 +13,6 @@ def check(ctx: dict) -> dict:
         return {
             "status": "DENIED",
             "error": "G2_NO_DECISION",
-            "hint": f"请提供 decision。可用脚本: {available}。格式: 'USE scene-query.cs'",
+            "hint": f"请提供 decision。可用脚本: {available}。格式: 'USE scene-query.cs' 或 'NONE'",
         }
     return validate_decision(decision)

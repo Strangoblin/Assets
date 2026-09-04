@@ -8,21 +8,24 @@
 
 ## 功能概述
 
-将用户指定的控制点（场景空物体）烘焙为均匀采样的曲线数据资产（`CurveAsset`），供 GPU 粒子模拟（如轨迹跟随）直接读取。支持 Catmull-Rom 和 Bezier 两种插值，支持 2D 平面约束。
+将用户指定父物体下的**直系子物体**作为控制点，烘焙为均匀采样的曲线数据资产（`CurveAsset`），供 GPU 粒子模拟（如轨迹跟随）直接读取。支持 Catmull-Rom 和 Bezier 两种插值，支持 2D 平面约束。
 
 ---
 
 ## 架构
 
 ```
-CurveGeneratorWindow (Editor)
-  │  GUI: 控制点拖拽、曲线类型/维度选择、Generate/Save
-  │  预览: SceneView Handles 绘制控制点 + 曲线 + 切线
+CurveGeneratorWindow (Editor, Tools → Curve Generator...)
+  │  GUI: Control Parent 字段 + 曲线类型/维度/采样数/Loop + Output 路径
+  │  预览: 读取父物体直系子物体 → SceneView Handles 绘制控制点 + 曲线 + 切线
   │
-  ├─→ CurveBake (Runtime Utility)
-  │     static Bake(pts, type, dim, samples, loop) → Result
-  │     内部: ProjectPositions → CatmullRom / Bezier 采样
-  │     返回: positions[], tangents[], arcLengths[], totalLength
+  ├─→ CurveBake (Runtime 静态数学)
+  │     Result struct / Bake / ProjectPositions
+  │     SampleUniform(pts, samples, closed, SegmentSampler)
+  │       ── 共享采样骨架：均匀分配余数 + 每段保底 1 样本 + 曲率/法线块
+  │
+  ├─→ Curves/CatmullRomCurve   ── SampleSegment: p0..p3 推导（过控制点）
+  ├─→ Curves/BezierCurve       ── SampleSegment: 相邻点自动手柄（过控制点）
   │
   └─→ CurveAsset (ScriptableObject)
         持久化: 采样数据 + 元信息
@@ -33,29 +36,33 @@ CurveGeneratorWindow (Editor)
 
 | 类 | 位置 | 职责 |
 |---|---|---|
-| `CurveGeneratorWindow` | `Assets/Editor/` | EditorWindow: GUI + Scene 预览 + Save |
-| `CurveBake` | `Scripts/CurveGenerator/` | 无状态数学工具: 投影 + Catmull-Rom + Bezier |
+| `CurveGeneratorWindow` | `Scripts/CurveGenerator/Editor/` | EditorWindow: GUI + Scene 预览 + Save |
+| `CurveBake` | `Scripts/CurveGenerator/` | 无状态数学工具: 投影 + 共享采样骨架 `SampleUniform` |
+| `Curves/BezierCurve` | `Scripts/CurveGenerator/Curves/` | Bezier 段公式 + `SampleSegment` 回调 |
+| `Curves/CatmullRomCurve` | `Scripts/CurveGenerator/Curves/` | Catmull-Rom 段公式 + `SampleSegment` 回调 |
 | `CurveAsset` | `Scripts/CurveGenerator/` | ScriptableObject: 曲线数据容器 |
+
+> 采样循环、首尾点、法线/曲率计算集中在 `CurveBake.SampleUniform`；各曲线类只提供段内 `Position`/`Tangent` 公式，避免逐字重复。
 
 ### 数据流
 
 ```
-场景空物体 (Transform[])          用户操作
-  │                                Tools → Curve Generator...
+Control Parent (Transform，拖入窗口)
+  │  GetComponentsInChildren 直系子物体
   ▼
-控制点位置 (Vector3[])             
-  │                                
+控制点位置 (Vector3[])                 用户操作
+  │                                    Tools → Curve Generator...
   ├── ProjectPositions() ─── 2D 模式: 投影到 XY/XZ/YZ 平面
   │
-  ├── CatmullRom 或 Bezier ─── 均匀采样 N 段
+  ├── Bake → SampleUniform ── 均匀采样（闭合/开放 + 曲率/法线）
   │
   ▼
-CurveBake.Result                   内存预览
+CurveBake.Result                       内存预览
   │  positions[] tangents[] arcLengths[]
   │
   ├── SceneView Handles ────── 黄色 CP 球 + 青色曲线 + 橙色切线
   │
-  └── Save → CurveAsset.asset ─ 持久化到磁盘
+  └── Save → CurveAsset.asset ─ 持久化到磁盘（覆盖需确认）
 ```
 
 ---
@@ -66,12 +73,12 @@ CurveBake.Result                   内存预览
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| Control Points | Transform[] | — | 场景空物体，拖拽入窗口（≥2 个） |
+| Control Parent | Transform | — | 场景父物体，其**直系子物体**即控制点（≥2 个） |
+| Curve Type | Enum | CatmullRom | CatmullRom（过控制点）/ Bezier（过控制点，自动手柄） |
 | Dimension | Toolbar | XYZ | XYZ / XY / XZ / YZ，投影到指定平面 |
-| Type | Enum | CatmullRom | CatmullRom（过控制点）/ Bezier（过控制点，自动手柄） |
-| Samples | Slider | 256 | 采样分辨率 (16–4096) |
+| Samples | Slider | 256 | 采样分辨率 (16–4096)，均匀分配至各段、每段保底 1 样本 |
 | Loop | Toggle | false | 首尾闭合 |
-| Asset Path | Text | `Assets/Mine/Curves/NewCurve.asset` | Save 输出路径 |
+| Asset Path | Text | `Assets/Mine/Curves/NewCurve.asset` | Save 输出路径（Browse... 可选） |
 
 ### CurveAsset 资产格式
 
@@ -115,16 +122,16 @@ CurveBake.Result                   内存预览
 
 ### 前置条件
 
-1. 场景中有 ≥2 个空物体作为控制点
+1. 场景中有 1 个父物体，且其下有 ≥2 个直系子物体作为控制点（空物体即可）
 2. 打开 `Tools → Curve Generator...`
 
 ### 操作流程
 
-1. 拖拽场景中的控制点空物体到窗口 `CP 0` … `CP N` 字段
-2. 选择 Dimension 和 Type
-3. 点击 `Generate`——Scene 视图显示曲线预览
-4. 调整控制点位置后重新 Generate
-5. 满意后点击 `Save`，存为 `.asset`
+1. 将场景中的控制点父物体拖入窗口 `Control Parent` 字段——子物体被当作控制点
+2. 选择 Curve Type 和 Dimension
+3. 点击 `Generate`——Scene 视图显示控制点与曲线预览
+4. 移动子物体位置后重新 Generate 刷新
+5. 满意后点击 `Save`，存为 `.asset`（路径已存在时弹覆盖确认）
 
 ### 运行时读取
 
@@ -144,21 +151,25 @@ for (int i = 0; i < curve.positions.Length; i++)
 ## 文件清单
 
 ```
-Assets/
-├── Editor/
-│   └── CurveGeneratorWindow.cs      ← EditorWindow（GUI + Scene 预览 + Save）
-│
-└── Mine/Scripts/CurveGenerator/
-    ├── CurveGenerator.md             ← 本文档
-    ├── CurveBake.cs                  ← 曲线烘焙算法（Catmull-Rom / Bezier）
-    └── CurveAsset.cs                 ← ScriptableObject 数据容器
+Assets/Mine/Scripts/CurveGenerator/
+├── CurveGenerator.md              ← 本文档
+├── CurveGeneratorWindow.cs.meta* ← Unity 生成的 GUID 元文件
+├── CurveBake.cs                   ← 曲线烘焙算法 + 共享采样骨架
+├── CurveAsset.cs                  ← ScriptableObject 数据容器
+├── Curves/
+│   ├── BezierCurve.cs             ← Bezier 段公式
+│   └── CatmullRomCurve.cs         ← Catmull-Rom 段公式
+└── Editor/
+    └── CurveGeneratorWindow.cs    ← EditorWindow（GUI + Scene 预览 + Save）
 ```
+
+> `*.cs.meta` 由 Unity 自动维护，`git mv` 迁移窗口时保留 GUID 以防引用丢失。
 
 ---
 
 ## 扩展点
 
-- **BSpline / Hermite**：在 `CurveBake.Bake()` 中添加分支
+- **BSpline / Hermite**：在 `Curves/` 下新增曲线类（段公式 + `SampleSegment` 回调），并在 `CurveBake.Bake()` 中登记类型
 - **手动手柄 Bezier**：控制点改为 `Transform[2]`（位置 + 手柄）
 - **3D 曲线管**：将 `positions[]` + `tangents[]` + `tubeRadius` 上传 GPU ComputeBuffer
 - **实时烘焙**：`CurveBake` 是纯静态方法，可在运行时调用（如动态生成的曲线）

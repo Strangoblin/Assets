@@ -6,7 +6,9 @@
       "Bash(rm -rf /Users/xiaokangji/Unity/Lab/Assets/Mine/**)",
       "Bash(rm -rf ~/*)",
       "Bash(sudo *)",
-      "Bash(curl * | sh)"
+      "Bash(curl * | sh)",
+      "Write(/Assets/Mine/**)",
+      "Edit(/Assets/Mine/**)"
     ],
     "allow": [
       "Bash(unityctl *)",

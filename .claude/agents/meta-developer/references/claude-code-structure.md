@@ -37,7 +37,7 @@
 name: <kebab-case>           # 必填
 description: <一句话描述>     # 必填，≤1024 chars
 tools: [Read, Write, Bash]   # allowlist（省略则继承全部）
-model: opus                  # haiku | sonnet | opus | inherit
+model: inherit               # 可选：haiku | sonnet | opus | inherit（不写则继承主会话）
 background: true             # 后台运行（默认）
 ---
 ```

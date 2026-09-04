@@ -12,7 +12,8 @@ metadata:
 创建了完整的 FGD LUT 烘焙工具链：
 
 1. **FGDPacker.shader** — Hidden/Mine/FGDPacker，逐像素调用 `IntegrateGGXAndDisneyDiffuseFGD`
-2. **FGDLutBaker.cs** — `Mine.FGDLutBaker` 静态工具类：`Bake()` / `SetGlobalLut()` / `ClearGlobalLut()` / `LogDiagnostics()`
+2. **FGDLutBaker.cs** — `Mine.FGDLutBaker` 静态工具类：`Bake()` / `LogDiagnostics()`（只负责生产纹理）
+2b. **FGDLutManager.cs** — 场景组件（MonoBehaviour）：自行探测挂载的 LUT，有图则设置全局 `_FGDLut` + `_UseFGDLut=1`，无图则清除回退分析近似。与 Baker 完全解耦，不接受外部驱动。
 3. **FGDLutBakerWindow.cs** — Editor 窗口：`Tools → FGD Lut Baker...`
 4. **ENVFunction.hlsl** — 合并 `BRDF_Env` + `BRDF_Env_HD` 为单一函数，`_UseFGDLut` toggle 自动选择 FGD LUT / Karis 分析近似
 
@@ -28,4 +29,4 @@ Water.shader、PBRToon.shader 无需任何修改 — `BRDF_Env` 签名完全兼�
 
 **Why:** 项目需要 FGD LUT 来替代 Karis 分析近似，获得更精确的环境光镜面反射。同时需要自动回退机制保证移动端兼容。
 
-**How to apply:** Editor 菜单 `Tools → FGD Lut Baker...` → Bake → Set LUT；或代码 `FGDLutBaker.Bake()` + `FGDLutBaker.SetGlobalLut()`。
+**How to apply:** Editor 菜单 `Tools → FGD Lut Baker...` → Bake → Save 为 .asset；场景中挂载 `FGDLutManager` 并赋 `Lut` 字段即可自动全局生效（无需代码调用）。

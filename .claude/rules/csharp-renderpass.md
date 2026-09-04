@@ -6,6 +6,8 @@ paths:
 ---
 # C# RenderPass 开发规范
 
+> 完整结构规范见 [references/shader/postprocess/feature-script-structure.md](../agents/unity-developer/references/shader/postprocess/feature-script-structure.md) + API 速查 [references/standard/rendering/render-graph.md](../agents/unity-developer/references/standard/rendering/render-graph.md)
+
 ## Unity 6 必须项
 
 - 主入口用 `RecordRenderGraph(RenderGraph, ContextContainer)`，不用旧版 `Execute()`
@@ -38,4 +40,5 @@ paths:
 | `CS1061` | 类型不包含方法 | 检查 API 是否 Unity 6 版本 |
 | `NullReferenceException` | 空引用 | 检查序列化 / domain reload 后初始化 |
 | `FindKernel` 返回 -1 | kernel 名不匹配 | 检查 compute 文件中 `#pragma kernel` 声明 |
+| `Destroy may not be called from edit mode!` | `[ExecuteAlways]` 组件在编辑模式调 `Destroy` | 按 `Application.isPlaying` 分支：播放用 `Destroy`，编辑用 `DestroyImmediate`（2026-08-27 POSSManager 实坑） |
 - 错误处理：同一个错误 3 次后兜底退出，不无限重试

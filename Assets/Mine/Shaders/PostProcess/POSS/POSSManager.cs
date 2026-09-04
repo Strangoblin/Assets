@@ -54,7 +54,11 @@ public class POSSManager : MonoBehaviour
     {
         if (s_Instance != null && s_Instance != this)
         {
-            Destroy(gameObject);
+            // ExecuteAlways：编辑模式 Destroy 非法，重复单例（隐藏临时对象）用 DestroyImmediate
+            if (Application.isPlaying)
+                Destroy(gameObject);
+            else
+                DestroyImmediate(gameObject);
             return;
         }
         s_Instance = this;

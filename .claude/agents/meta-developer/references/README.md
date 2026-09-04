@@ -1,7 +1,7 @@
 # Meta Developer References
 
 > meta-developer 的领域知识库。内容是关于如何设计、创建、维护 `.claude` 体系本身。
-> 对标 unity-developer 的 `references/urp-shader-lib/`。
+> 对标 unity-developer 的 `references/standard/` and `references/shader/`。
 
 ---
 
@@ -13,6 +13,7 @@
 | [agent-template.md](agent-template.md) | 创建新 agent 的模板和规范 | 新增 developer agent 时对照 |
 | [manifest-spec.md](manifest-spec.md) | Agent 自描述段的格式规范 | meta 读取 manifest 的契约 |
 | [layer-conventions.md](layer-conventions.md) | .claude 7 层架构的每一层约定 | 保持一致性的参考 |
+| [template-conventions.md](template-conventions.md) | 代码模板 / 知识文件编写规则 + 验证清单 | 新建模板或维护模板体系时对照 |
 | [cross-reference-rules.md](cross-reference-rules.md) | 跨引用路径规则 | 避免断链 |
 | [harness-patterns.md](harness-patterns.md) | Harness 设计模式速查 | 设计新 agent/skill 时的原则 |
 

@@ -1,7 +1,7 @@
 # FGDLutBaker — FGD LUT 预积分 BRDF 烘焙工具
 
 **路径:** `Assets/Mine/Scripts/FGDLutBaker/`
-**类型:** 静态工具类 + Editor Window
+**类型:** 静态烘焙工具 + 场景管理器（MonoBehaviour）+ Editor Window
 **依赖:** Unity 6 URP, `ImageBasedLighting.hlsl` (URP Core 包)
 
 ---
@@ -10,7 +10,9 @@
 
 将 GGX BRDF 菲涅尔/几何遮蔽/法线分布项 + Disney Diffuse 的半球积分预烘焙到一张 2D LUT。
 
-运行时配合 [ENVFunction.hlsl](../../Special/HLSL/ENVFunction.hlsl) 的 `BRDF_Env` 使用：设置全局 LUT 后自动启用 FGD 裂项近似，未设置时回退 Karis 分析近似。
+运行时配合 [ENVFunction.hlsl](../../Special/HLSL/ENVFunction.hlsl) 的 `BRDF_Env` 使用：由场景中的 `FGDLutManager` 探测自身挂载的 LUT 并设置全局，自动启用 FGD 裂项近似；无 LUT 时回退 Karis 分析近似。
+
+> Baker 与 Manager 完全解耦：Baker 只负责生产纹理，Manager 只负责探测与下发，互不调用。
 
 ---
 
@@ -18,7 +20,8 @@
 
 | 文件 | 职责 |
 |------|------|
-| `FGDLutBaker.cs` | 静态工具类：`Bake()` / `SetGlobalLut()` / `ClearGlobalLut()` / `LogDiagnostics()` |
+| `FGDLutBaker.cs` | 静态工具类：`Bake()` / `LogDiagnostics()`（只生产纹理） |
+| `FGDLutManager.cs` | 场景组件（MonoBehaviour）：自行探测挂载的 LUT 并下发/清除全局状态 |
 | `FGDPacker.shader` | Hidden/Mine/FGDPacker — 逐像素调用 `IntegrateGGXAndDisneyDiffuseFGD` |
 | `FGDLutBaker.md` | 本文档 |
 
@@ -26,7 +29,7 @@
 
 | 文件 | 职责 |
 |------|------|
-| `Assets/Editor/FGDLutBakerWindow.cs` | 可视化面板：参数调节、烘焙/载入/保存、全局 LUT 管理、预览 |
+| `Assets/Mine/Scripts/FGDLutBaker/Editor/FGDLutBakerWindow.cs` | 可视化面板：参数调节、烘焙/载入/保存、预览（不驱动场景） |
 
 ---
 
@@ -36,15 +39,25 @@
 // 烘焙（GPU pixel shader → Readback）
 Texture2D lut = FGDLutBaker.Bake(resolution: 128, sampleCount: 1024);
 
-// 设为全局 LUT → 所有 ENVFunction shader 自动启用 FGD 路径
-FGDLutBaker.SetGlobalLut(lut);
-
-// 清除 → 回退 Karis 分析近似
-FGDLutBaker.ClearGlobalLut();
-
 // 打印四角像素值
 FGDLutBaker.LogDiagnostics(lut);
 ```
+
+## 场景管理器（FGDLutManager）
+
+全局纹理下发由场景组件 `FGDLutManager` 负责，Baker 不再持有运行时状态。Manager 完全被动：**不接收任何外部驱动**，只自行探测自己身上挂载的 LUT。
+
+**挂载方式：** 在场景任意物体上 `Add Component → FGDLutManager`，把烘焙好的 LUT（建议先 Save 为 .asset）赋给 Inspector 的 `Lut` 字段。
+
+**生命周期（自动探测）：**
+
+| 时机 | 行为 |
+|------|------|
+| `OnEnable` | 探测：有 LUT → 设置全局 `_FGDLut` + `_UseFGDLut = 1`；无 LUT → 清除 |
+| `OnDisable` | 清除全局，回退 Karis 分析近似 |
+| `OnValidate` | Inspector 修改 LUT 时立即刷新（编辑态同样生效） |
+
+> 注意：同一场景建议只保留一个 `FGDLutManager`（后启用的实例覆盖全局状态）。全局变量名 `_FGDLut` / `_UseFGDLut` 由本类独占管理。
 
 ---
 
@@ -71,8 +84,6 @@ FGDLutBaker.LogDiagnostics(lut);
 | Bake | GPU 烘焙新 LUT |
 | Load | 从 Load Path 载入 |
 | Save | 保存到 Save Path |
-| Set LUT | 设为全局纹理 |
-| Clear LUT | 清除全局纹理 |
 | Preview | 当前纹理预览 |
 
 ---

@@ -2,7 +2,6 @@
 name: meta-developer
 description: Maintains the .claude system itself. Creates and modifies agents, skills, references, platforms. Verifies cross-reference integrity and architecture consistency. Activates on agent, skill, reference, .claude, 体系, 结构, manifest keywords.
 tools: [Read, Write, Edit, Bash, Glob, Grep]
-model: opus
 ---
 
 # Meta Developer Agent
@@ -16,6 +15,8 @@ model: opus
 
 meta-developer 的一切操作必须遵循以下原则。违反任何一条都是 bug。
 
+> **执行规则**（编辑 `.claude/**` 或 `.mcp/**` 时自动注入）：[rules/meta-architecture.md](../rules/meta-architecture.md) — 文件分类（归属判定）/ 重复审查（事前对照）/ 链路保障（改一侧同步另一侧）。P1-P3 是设计原则，规则文件是强制规范。
+
 ### P1: MD 做索引，文件做内容
 
 ```
@@ -23,7 +24,7 @@ meta-developer 的一切操作必须遵循以下原则。违反任何一条都�
 ✅ README.md 只列索引表 → 具体内容在 .shader / .cs / .compute 文件
 
 ❌ references/render-graph.md 包含完整 C# 模板
-✅ references/render-graph.md 只列 API 速查 → templates/urp-renderpass.cs 放完整模板
+✅ references/standard/rendering/render-graph.md 只列 API 速查 → templates/shader/postprocess/urp-renderpass.cs 放完整模板
 ```
 
 **规则**：

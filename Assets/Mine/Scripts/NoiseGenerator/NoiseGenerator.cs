@@ -1,5 +1,10 @@
 using UnityEngine;
 
+/// <summary>
+/// Procedural 3D noise generator facade. Texture generation, seamless tiling and
+/// channel packing on top of the per-algorithm implementations in
+/// <see cref="PerlinNoise"/> / <see cref="VoronoiNoise"/>. Callable from Editor and Runtime.
+/// </summary>
 public static class NoiseGenerator
 {
     public enum NoiseType
@@ -43,7 +48,7 @@ public static class NoiseGenerator
                 for (int x = 0; x < size; x++)
                 {
                     float wx = seamless ? (float)x / size : Mathf.Min((float)x / size, 1f - 1f / size);
-                    float sample = Sample3D(wx, wy, wz, scale, size, seamless, noiseType);
+                    float sample = Sample3D(wx, wy, wz, scale, seamless, noiseType);
                     colors[x + y * size + z * size * size] = new Color(sample, 0f, 0f, 1f);
                 }
             }
@@ -77,7 +82,7 @@ public static class NoiseGenerator
             for (int x = 0; x < res; x++)
             {
                 float wx = (float)x / res;
-                float sample = Sample3D(wx, sliceY, wz, scale, res, seamless, noiseType);
+                float sample = Sample3D(wx, sliceY, wz, scale, seamless, noiseType);
                 colors[x + y * res] = new Color(sample, sample, sample, 1f);
             }
         }
@@ -92,18 +97,15 @@ public static class NoiseGenerator
         return texture;
     }
 
-    public static Texture2D Generate2DSliceTexture(
-        int resolution,
-        int channels,
-        float sliceStart,
-        float sliceDistance,
-        float scale,
-        int period,
-        bool seamless,
-        NoiseType noiseType)
+    /// <summary>
+    /// Pack the R channels of up to four source textures into a single RGBA texture,
+    /// resampled bilinearly at the target resolution. Sources rendered at a lower
+    /// resolution keep their intended low-frequency look in the packed output.
+    /// </summary>
+    public static Texture2D PackChannels(Texture2D[] sources, int resolution)
     {
         int res = Mathf.Clamp(resolution, 8, 2048);
-        int ch = Mathf.Clamp(channels, 1, 4);
+        int count = Mathf.Min(sources?.Length ?? 0, 4);
 
         var texture = new Texture2D(res, res, TextureFormat.RGBA32, false)
         {
@@ -114,26 +116,18 @@ public static class NoiseGenerator
         Color[] colors = new Color[res * res];
         for (int y = 0; y < res; y++)
         {
-            float wz = (float)y / res;
+            float wy = (float)y / res;
             for (int x = 0; x < res; x++)
             {
                 float wx = (float)x / res;
                 Color c = new Color(0f, 0f, 0f, 1f);
-
-                for (int channel = 0; channel < ch; channel++)
+                for (int i = 0; i < count; i++)
                 {
-                    float wy = sliceStart + channel * sliceDistance;
-                    wy = seamless ? Repeat01(wy) : Mathf.Clamp01(wy);
-                    c[channel] = Sample3D(wx, wy, wz, scale, period, seamless, noiseType);
+                    if (sources[i] != null)
+                        c[i] = sources[i].GetPixelBilinear(wx, wy).r;
                 }
-
                 colors[x + y * res] = c;
             }
-        }
-
-        if (seamless)
-        {
-            MakeSeamless2D(colors, res);
         }
 
         texture.SetPixels(colors);
@@ -187,20 +181,14 @@ public static class NoiseGenerator
 
     // ── Sampling entry points ────────────────────────────────────────────────
 
-    public static float Sample3D(float x, float y, float z, float scale, int period, bool seamless, NoiseType noiseType)
+    public static float Sample3D(float x, float y, float z, float scale, bool seamless, NoiseType noiseType)
     {
         if (seamless)
         {
             return SampleTileable3D(x, y, z, scale, noiseType);
         }
 
-        switch (noiseType)
-        {
-            case NoiseType.Voronoi:
-                return VoronoiNoise.Sample(x, y, z, scale);
-            default:
-                return PerlinNoise.Sample(x, y, z, scale);
-        }
+        return SampleBaseNoise(x, y, z, scale, noiseType);
     }
 
     private static float SampleTileable3D(float x, float y, float z, float scale, NoiseType noiseType)

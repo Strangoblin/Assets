@@ -1,4 +1,3 @@
-using System.Data;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -19,8 +18,19 @@ public class SSLFeature : ScriptableRendererFeature
         [Range(0, 4)] public int blurLevels = 1;
         [Range(0, 4)] public int blurIterations = 1;
         public bool SSLFeature = true;
+
+        public enum SSLMode
+        {
+            RAY3D_Fog,
+            RAY3D_Light,
+            RBR2D
+        }
+        public SSLMode sslMode = SSLMode.RAY3D_Light;
     }
 
+    // ════════════════════════════════════════════════════════════
+    //  SSLRenderPass — Unity 6 RecordRenderGraph
+    // ════════════════════════════════════════════════════════════
     class SSLRenderPass : ScriptableRenderPass
     {
         private Material sslMaterial;
@@ -47,6 +57,9 @@ public class SSLFeature : ScriptableRendererFeature
             ConfigureInput(ScriptableRenderPassInput.Color | ScriptableRenderPassInput.Depth);
         }
 
+        // ════════════════════════════════════════════════════════════
+        //  RecordRenderGraph — Unity 6 入口
+        // ════════════════════════════════════════════════════════════
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
@@ -55,26 +68,32 @@ public class SSLFeature : ScriptableRendererFeature
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid() || sslMaterial == null) return;
 
-            // ── Volume 参数 ──
-            var stack = VolumeManager.instance.stack;
-            var vol = stack.GetComponent<SSLVolume>();
-            if (vol == null || !vol.IsActive() || !cameraData.postProcessEnabled)
-                return;
-
             // ── 材质参数 ──
-            sslMaterial.SetInt("_MaxSteps", vol.maxSteps.value);
-            sslMaterial.SetFloat("_MaxDistance", vol.maxDistance.value);
-            sslMaterial.SetFloat("_Intensity", vol.intensity.value);
-            sslMaterial.SetFloat("_SSLScale", vol.sslScale.value);
-            sslMaterial.SetFloat("_BlurScale", vol.blurScale.value);
-            sslMaterial.SetFloat("_JitterScale", vol.jitterScale.value);
+            sslMaterial.SetInt("_MaxSteps", settings.maxSteps);
+            sslMaterial.SetFloat("_MaxDistance", settings.maxDistance);
+            sslMaterial.SetFloat("_Intensity", settings.intensity);
+            sslMaterial.SetFloat("_SSLScale", settings.sslScale);
+            sslMaterial.SetFloat("_BlurScale", settings.blurScale);
+            sslMaterial.SetFloat("_JitterScale", settings.jitterScale);
 
+            // ── 模式关键字 ──
+            sslMaterial.DisableKeyword("SSL_RBR2D");
+            sslMaterial.DisableKeyword("SSL_RAY3D");
             sslMaterial.DisableKeyword("SSL_FOG");
             sslMaterial.DisableKeyword("SSL_LIGHT");
-            switch (vol.sslType.value)
+            switch (settings.sslMode)
             {
-                case SSLVolume.SSLType.Fog: sslMaterial.EnableKeyword("SSL_FOG"); break;
-                case SSLVolume.SSLType.Light: sslMaterial.EnableKeyword("SSL_LIGHT"); break;
+                case Settings.SSLMode.RAY3D_Fog:
+                    sslMaterial.EnableKeyword("SSL_RAY3D");
+                    sslMaterial.EnableKeyword("SSL_FOG");
+                    break;
+                case Settings.SSLMode.RAY3D_Light:
+                    sslMaterial.EnableKeyword("SSL_RAY3D");
+                    sslMaterial.EnableKeyword("SSL_LIGHT");
+                    break;
+                case Settings.SSLMode.RBR2D:
+                    sslMaterial.EnableKeyword("SSL_RBR2D");
+                    break;
             }
 
             // ── RT ──
@@ -128,7 +147,7 @@ public class SSLFeature : ScriptableRendererFeature
                     // Copy source → tempMain
                     Blitter.BlitCameraTexture(cmd, data.source, data.tempMainRT);
 
-                    // Pass 0: SSL Raymarch → blurPing[0] (full res)
+                    // Pass 0: SSL 生成（RAY3D 步进 / RBR2D 径向模糊）→ blurPing[0] (full res)
                     Blitter.BlitCameraTexture(cmd, data.source, data.blurPing[0], data.material, 0);
 
                     // ── 多级模糊 ──
@@ -174,6 +193,10 @@ public class SSLFeature : ScriptableRendererFeature
             }
         }
     }
+
+    // ════════════════════════════════════════════════════════════
+    //  Feature 入口
+    // ════════════════════════════════════════════════════════════
 
     public Settings settings = new Settings();
     SSLRenderPass sslPass;

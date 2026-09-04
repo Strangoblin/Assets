@@ -31,7 +31,7 @@
 
 | 字段 | 类型 | 用途 | 示例 |
 |------|------|------|------|
-| `references` | 目录名列表 | meta 验证这些目录存在且完整 | `urp-shader-lib/, unity6-api/` |
+| `references` | 目录名列表 | meta 验证这些目录存在且完整 | `standard/, shader/` |
 | `skills` | skill 名列表 | meta 验证这些 skill 存在且不被误删 | `auto-manager, unity-editor` |
 | `memory` | 相对路径 | meta 验证 memory 文件存在 | `../memory/MEMORY.md` |
 | `擅长` | 文本 | meta 用于路由判断 | `URP Shader, Compute Shader` |

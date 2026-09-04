@@ -49,9 +49,10 @@ def validate_decision(decision: str, script_name: str = "") -> dict:
     """校验 [G2] 脚本决策.
 
     decision 格式:
-      "USE query_scene.cs"     → 使用已有脚本（必须存在）
+      "USE scene-query.cs"     → 使用已有脚本（必须存在）
       "CREATE reusable x.cs"   → 新建可复用脚本（合法路径）
       "CREATE tmp x.cs"        → 新建临时脚本
+      "NONE"                   → 无脚本任务（纯 shader/C# 文件改动）
     """
     if not decision:
         return {"status": "DENIED", "error": "EMPTY_DECISION", "hint": "Decision 不能为空"}
@@ -63,7 +64,7 @@ def validate_decision(decision: str, script_name: str = "") -> dict:
     if action == "USE":
         if not target:
             return {"status": "DENIED", "error": "USE_MISSING_SCRIPT",
-                    "hint": "USE 需要指定脚本名。示例: USE query_scene.cs"}
+                    "hint": "USE 需要指定脚本名。示例: USE scene-query.cs"}
         exists = script_exists(target)
         if not exists:
             available = [s["name"] for s in list_scripts()]
@@ -98,5 +99,9 @@ def validate_decision(decision: str, script_name: str = "") -> dict:
         return {"status": "OK", "action": "CREATE", "type": target,
                 "name": name, "path": path, "mode": "dynamic" if target == "tmp" else "reusable"}
 
+    elif action == "NONE":
+        # 宽容实现：允许 "NONE 附带说明"
+        return {"status": "OK", "action": "NONE", "mode": "none"}
+
     return {"status": "DENIED", "error": "INVALID_ACTION",
-            "hint": f"Decision 必须以 USE 或 CREATE 开头。收到: '{decision}'"}
+            "hint": f"Decision 必须以 USE、CREATE 或 NONE 开头。收到: '{decision}'"}

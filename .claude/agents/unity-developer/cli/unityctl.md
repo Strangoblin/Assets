@@ -76,17 +76,6 @@ unityctl script lookup-type <Name>
 unityctl script members <Type> [--filter X] [--static]
 ```
 
-### Screenshots & Recording
-
-```bash
-unityctl screenshot capture              # 捕获 Game View
-unityctl screenshot list-windows         # 列出 Editor 窗口
-unityctl screenshot window <window>      # 按类型或标题捕获特定窗口
-unityctl record start                    # 开始录制（手动停止）
-unityctl record start --duration 10      # 录制 10 秒，阻塞至完成
-unityctl record stop                     # 停止录制，返回文件路径 + 时长
-```
-
 ### Scene Snapshot
 
 ```bash
@@ -132,7 +121,7 @@ unityctl play enter
 unityctl snapshot            # 运行时状态检查
 unityctl logs                # 检查错误/警告
 unityctl play exit
-# 仅在需要判断视觉效果时截图
+# 视觉效果由人工在 Game 视图确认
 ```
 
 ## 故障排除
@@ -147,9 +136,27 @@ unityctl play exit
 | 命令超时 | 可能原生对话框阻塞：`unityctl dialog list` |
 | 进度条卡住 | `unityctl dialog list` 检查，等待或关闭 |
 
+## 宿主隔离故障处理
+
+`unityctl bridge` 与 Unity Editor 必须运行在同一宿主、进程/网络命名空间中。沙盒环境与真实宿主环境之间的 bridge **不互通**：沙盒内启动的 bridge 不能连接真实环境中的 Editor，真实环境中的 bridge 也不能由沙盒命令当作可用连接复用。
+
+因此，如果普通命令环境报告 `Socket permission denied`、stale bridge，或 `Unity not connected`，但 Unity Editor 正在运行，应先判断命令与 Editor 是否位于不同执行环境，而不是诊断为插件缺失。`unityctl status` 同时显示 Editor/bridge 存在也不代表二者可通信，最终以 `Unity connected` 和 `unityctl wait` 成功为准。
+
+在与 Unity Editor 相同的宿主环境中执行并保持 bridge：
+
+```bash
+cd /Users/xiaokangji/Unity/Lab
+unityctl bridge stop
+unityctl bridge start
+unityctl bridge status
+unityctl status
+```
+
+如果 bridge 健康但 `Unity Connected: False`，不要立即重启 Editor；先触发一次已有 Editor C# 文件的重新导入以执行 `[DidReloadScripts]` 重连，然后使用 `unityctl wait --timeout 60` 验证。关闭 Editor 只应在确认没有未保存内容后进行。
+
 ## 最佳实践
 
-90. **结构化优于截图**：能用 `snapshot`、`logs`、`script eval` 验证的，不用 `screenshot`
+90. **结构化优先**：能用 `snapshot`、`logs`、`script eval` 验证的优先结构化；画面质量由人工在 Editor 观测
 1. **快照优于评估**：用 `snapshot` 观察场景，`ui click` 交互，`eval --id` 定制操作
 2. **名称优先于 ID**：`--name` 比 `--id` 更稳定（instance ID 在 Play Mode 间会变）
 3. **总是用 Write 工具创建 .cs 文件**：不用 shell heredoc（在 C# 单引号处会断）

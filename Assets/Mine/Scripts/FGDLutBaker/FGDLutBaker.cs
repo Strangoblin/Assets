@@ -15,6 +15,7 @@ namespace Mine.FGDLutBaker
     /// FGD LUT 烘焙工具 — 生成预积分 BRDF 响应查找表。
     /// 可通过 GPU pixel shader（调用 Unity 内置 IntegrateGGXAndDisneyDiffuseFGD）
     /// 烘焙，也可用作纯 CPU 计算验证。
+    /// 全局纹理下发由 FGDLutManager（场景组件）负责，本类不管理运行时状态。
     /// </summary>
     ///
     /// <remarks>
@@ -92,32 +93,6 @@ namespace Mine.FGDLutBaker
             Object.DestroyImmediate(material);
 
             return result;
-        }
-
-        // ════════════════════════════════════════════════════════════════════
-        //  全局纹理管理
-        // ════════════════════════════════════════════════════════════════════
-
-        /// <summary>
-        /// 将烘焙的 LUT 设为全局纹理，所有使用 ENVFunction.hlsl 的 Shader
-        /// 会自动检测并启用 FGD 裂项近似路径。
-        /// </summary>
-        public static void SetGlobalLut(Texture2D lut)
-        {
-            Shader.SetGlobalTexture("_FGDLut", lut);
-            Shader.SetGlobalFloat("_UseFGDLut", 1.0f);
-            Debug.Log($"FGDLutBaker: Global _FGDLut set ({lut.width}×{lut.height}). "
-                + "All ENVFunction shaders now use FGD LUT path.");
-        }
-
-        /// <summary>
-        /// 清除全局 LUT，所有 Shader 自动回退到 Karis 分析近似。
-        /// </summary>
-        public static void ClearGlobalLut()
-        {
-            Shader.SetGlobalTexture("_FGDLut", null);
-            Shader.SetGlobalFloat("_UseFGDLut", 0.0f);
-            Debug.Log("FGDLutBaker: Global _FGDLut cleared. Shaders fallback to analytical.");
         }
 
         // ════════════════════════════════════════════════════════════════════

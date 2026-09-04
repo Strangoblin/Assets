@@ -5,7 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/ImageBasedLighting.hlsl"
 
 // ── 全局 FGD LUT ──
-// C# 通过 FGDLutBaker.SetGlobalLut() / ClearGlobalLut() 控制。
+// 由场景组件 FGDLutManager 探测自身挂载的 LUT 后自动设置/清除。
 TEXTURE2D(_FGDLut);
 SAMPLER(sampler_FGDLut);
 float   _UseFGDLut;

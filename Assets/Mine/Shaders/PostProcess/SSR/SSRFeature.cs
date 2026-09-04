@@ -13,7 +13,7 @@ public class SSRFeature : ScriptableRendererFeature
         [Range(1f, 200f)] public float maxDistance = 50f;
 
         [Range(8, 256)] public int stepCount = 64;
-        [Range(0, 32)] public int binaryCount = 6;
+        [Range(0, 32)] public int binCount = 6;
         [Range(1, 8)] public int mipCount = 4;
 
         [Range(0.001f, 0.5f)] public float thickness = 0.05f;
@@ -25,9 +25,9 @@ public class SSRFeature : ScriptableRendererFeature
 
         public enum SSRType
         {
-            HiZ2D,
+            HIZ2D,
             DDA2D,
-            Ray3D
+            RAY3D
         }
         public SSRType ssrType = SSRType.DDA2D;
     }
@@ -84,7 +84,7 @@ public class SSRFeature : ScriptableRendererFeature
             ssrMaterial.SetFloat("_JitterScale", settings.jitterScale);
             ssrMaterial.SetFloat("_BlurScale", settings.blurScale);
             ssrMaterial.SetInt("_StepCount", settings.stepCount);
-            ssrMaterial.SetInt("_BinaryCount", settings.binaryCount);
+            ssrMaterial.SetInt("_BinCount", settings.binCount);
             ssrMaterial.SetFloat("_MaxMipLevel", settings.mipCount);
 
             // ── 关键字 ──
@@ -94,8 +94,8 @@ public class SSRFeature : ScriptableRendererFeature
             switch (settings.ssrType)
             {
                 case Settings.SSRType.DDA2D: ssrMaterial.EnableKeyword("SSR_DDA2D"); break;
-                case Settings.SSRType.Ray3D: ssrMaterial.EnableKeyword("SSR_RAY3D"); break;
-                case Settings.SSRType.HiZ2D: ssrMaterial.EnableKeyword("SSR_HIZ2D"); break;
+                case Settings.SSRType.RAY3D: ssrMaterial.EnableKeyword("SSR_RAY3D"); break;
+                case Settings.SSRType.HIZ2D: ssrMaterial.EnableKeyword("SSR_HIZ2D"); break;
             }
 
             // ── 相机矩阵（避免 GetGPUProjectionMatrix() 无参版触发 cameraColorTargetHandle）──
