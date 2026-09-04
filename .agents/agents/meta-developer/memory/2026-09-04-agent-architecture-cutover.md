@@ -22,14 +22,15 @@ Codex 完成 Phase 2-4(共享层迁移 + MCP 切流)后交接 Claude 验证与�
 - 本会话实测:新进程已加载 `.agents` 解析;`gate_pass(g_knowledge)` 返回的 `resolved_details[].canonical_relative_path` 全部以 `.agents/agents/unity-developer/references/` 开头,无旧 `.claude` 路径
 - Codex 侧持久化服务返回旧路径 = 进程未重载;修复方式 = 重启进程,不是 gate_reset
 
-## Claude skills 兼容方案(裁决)
+## Claude skills 兼容方案(裁决 + 已执行)
 
 - 现状:`.claude/skills/` 保留 9 组**实体副本**(非软链),6 个文件与 `.agents` 漂移;`.agents` 侧为 Phase 3 裁决后较新内容;Claude CLI 不可用,无法外部探针,本会话即发现权威
 - 方案一(直接发现 `.agents/skills/`)不成立:平台无自定义 skill 根机制
 - 方案三(镜像)= 现状,漂移源头
 - **裁决:方案二 — `.claude/skills/<name>` 逐个改为相对软链 → `.agents/skills/<name>`**,发现入口不变、正文单源、漂移归零
-- ⛔ 执行需人工确认(删除 32 个 tracked 副本 + 平台发现边界变化);验证 = 重启会话 skill 仍可加载 + 正文来自 `.agents`;回滚 = `git revert`
-- 附带收益:strict 验收剩余失败项(drift 6 + 副本内 1 处绝对路径)随切流清零
+- **2026-09-04 同日执行**(人工确认后,提交 `fdf9106`):32 个 tracked 副本删除 + 9 条相对软链;文件集双向一致核对通过;`git rm` 遗留空 references 目录与嵌套软链已清理(教训:`git rm` 后目录仍存时 `ln -s` 会把软链建进目录内部,应先确认目录清空)
+- 验证:strict 全绿(drift 6→0、absolute 1→0);技能列表即时重载(会话内已见 auto-manager 从 `.agents` 载入);**最终发现链确认 = 重启 Claude 会话后技能可加载**
+- 回滚 = `git revert fdf9106`
 
 ## Codex 适配层切流(Phase 6 完成)
 
@@ -45,21 +46,23 @@ Codex 完成 Phase 2-4(共享层迁移 + MCP 切流)后交接 Claude 验证与�
 |----|---------|---------|
 | `.claude/agents/*.md` | 相对软链 → `.agents/agents/<role>/AGENT.md`(实测发现正常) | Claude/Codex/MCP/Unity 四链验证后,人工确认 |
 | `.claude/rules/*.md` | 相对软链 → `.agents/rules/*.md`(实测注入正常) | 同上 |
-| `.claude/skills/*` | 实体副本(漂移 6) | 人工确认软链切流(见上)后删除实体 |
+| `.claude/skills/*` | 9 条相对软链(实体已删,`fdf9106`) | 已退役;发现链最终确认 = 重启会话 |
 | `.claude/agents/<role>/` 空目录壳 | memory/references/cli/scripts/templates 空壳 | 与软链退役同批 |
 
 - `.claude/settings.local.json` 为机器本地(gitignored),verify 扫描已豁免
 - 退役命令 `find -L .claude -type l -print` 应零输出;根 `AGENTS.md` 保持普通文件(非软链)
 
-## 验证证据(2026-09-04)
+## 验证证据(2026-09-04,最终验收全绿)
 
 ```bash
-bash .codex/tests/06_architecture/run.sh          # PASS(default fixture 不变)
-python3 .codex/tests/06_architecture/verify.py --strict  # 仅剩 skills 切流 2 项
+bash .codex/tests/06_architecture/run.sh          # PASS(fixture 推进 phase7:tracked_claude 49→26、drift 6→0)
+python3 .codex/tests/06_architecture/verify.py --strict  # PASS(切流后全绿:drift 0 / absolute 0 / codex_case 0)
 .mcp/.venv/bin/python .mcp/tests/test_knowledge_paths.py  # PASS
 .mcp/.venv/bin/python .mcp/tests/test_recipes.py          # All passed
+find -L .claude .agents -type l -print | wc -l      # 0(无断链)
 codex exec --sandbox read-only                        # 入口探针通过
 unityctl status                                        # 见最终验收
 ```
 
-提交:`docs(agent-architecture): record adapter cutover handoff closure`(或按实际序列)。
+- 默认 fixture 在 skills 切流后随 `fdf9106` 失效(49/6 对不上 26/0),已新增 `PHASE7_BASELINE` 闭包基线(历史 PRE_MIGRATION/PHASE3/PHASE4 保留为迁移差值说明)
+- 提交:`docs(agent-architecture): mark skills cutover and strict acceptance green`(含 verify.py fixture 推进)。

@@ -31,4 +31,4 @@ Unity 6 + URP 17+ 渲染技术实验室，涉及 Shader / HLSL / Compute / Rende
 
 ## 迁移状态
 
-当前为 Agent 架构重构 Phase 6：共享 rules、角色定义、角色归属内容和 MCP knowledge roots 已切换到 `.agents`；Claude 适配层（agent/rules 软链）与 Codex 适配层（入口/运行时角色）已完成切流与验证。待办（需人工确认）：`.claude/skills/` 逐 skill 软链切流与 Phase 7 旧副本清理。
+当前为 Agent 架构重构收尾：共享 rules、角色定义、角色归属内容和 MCP knowledge roots 已切换到 `.agents`；Claude 适配层（agent/rules/skills 软链）与 Codex 适配层（入口/运行时角色）已完成切流与验证（2026-09-04 strict 验收全绿）。`.claude/` 仅剩发现软链与空目录壳，退役日期见 `.agents/agents/meta-developer/memory/2026-09-04-agent-architecture-cutover.md`。

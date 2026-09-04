@@ -33,8 +33,9 @@ PHASE2_REQUIRED = [
     ".agents/interfaces/README.md",
     ".agents/interfaces/knowledge-paths.md",
 ]
-# Historical fixture retained for explaining the migration delta.  The active
-# default fixture tracks the current Phase 4 MCP cutover architecture.
+# Historical fixtures retained for explaining the migration delta.  The active
+# default fixture tracks the current closure architecture (Phase 7 body done:
+# skills copies removed, only adapter-layer tracked files remain).
 PRE_MIGRATION_BASELINE = {
     "tracked_claude": 155,
     "agents_broken_markdown_links": 20,
@@ -51,6 +52,13 @@ PHASE4_BASELINE = {
     "tracked_claude": 49,
     "agents_broken_markdown_links": 0,
     "skill_drift_files": 6,
+    "mcp_hardcoded_claude_files": 0,
+}
+# Closure baseline: .claude/skills cutover (fdf9106) removed 32 tracked copies.
+PHASE7_BASELINE = {
+    "tracked_claude": 26,
+    "agents_broken_markdown_links": 0,
+    "skill_drift_files": 0,
     "mcp_hardcoded_claude_files": 0,
 }
 
@@ -282,7 +290,7 @@ def main() -> int:
     phase2_errors = phase2_contract()
 
     summary = {
-        "fixture": "phase4",
+        "fixture": "phase7",
         "tracked_claude": len(tracked(".claude/")),
         "tracked_agents": len(tracked(".agents/")),
         "tracked_codex": len(tracked(".codex/")),
@@ -332,9 +340,9 @@ def main() -> int:
         if codex_case:
             errors.append(f"architecture docs contain {len(codex_case)} .Codex case hits")
     else:
-        for key, expected in PHASE4_BASELINE.items():
+        for key, expected in PHASE7_BASELINE.items():
             if summary[key] != expected:
-                errors.append(f"Phase 4 fixture metric {key} changed: expected {expected}, got {summary[key]}")
+                errors.append(f"Phase 7 fixture metric {key} changed: expected {expected}, got {summary[key]}")
 
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     print(f"inventory={OUTPUT / 'migration-inventory.json'}")
@@ -344,7 +352,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print("PASS: Phase 4 migration fixture/contract checks + Phase 2 scaffold contract")
+    print("PASS: Phase 7 closure fixture/contract checks + Phase 2 scaffold contract")
     return 0
 
 

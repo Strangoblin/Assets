@@ -39,6 +39,6 @@
 - `meta-developer` ✅ — references, memory
 
 ### 待办
-- [ ] `.claude/skills/` 实体副本 → 逐 skill 相对软链（2026-09-04 裁决方案二，执行需人工确认）
-- [ ] 删除已迁移旧路径的 compatibility stubs（需单独确认）
+- [x] `.claude/skills/` 实体副本 → 逐 skill 相对软链（2026-09-04 裁决方案二，人工确认后执行；32 文件 → 9 软链）
+- [ ] 删除已迁移旧路径的 compatibility stubs（agent/rules 软链为发现机制保留；仅剩 `.claude/agents/<role>/` 空目录壳物理清理，无 git 足迹）
 - [x] standard Script/Shader 代码模板（2026-09-03 落盘：standard-script.cs / standard-shader.shader）
