@@ -1,108 +1,66 @@
-# Unity Lab — 项目身份
+# Unity Lab — Claude 项目入口
 
-> Unity 渲染实验与 Shader 研发项目。本文件是项目级 CLAUDE.md，全局路由文件会导航到此。
+> 本文件只保留 Claude Code 的项目入口、门禁和平台适配说明。跨平台共享知识唯一权威源为 `.agents/`；不要在 `.claude/` 编辑共享正文。
 
----
+## 项目身份
 
-## 项目概述
+Unity 6 + URP 17+ 渲染技术实验室，涉及 Shader / HLSL / Compute / RenderGraph / C# 与 Unity Editor 验证。
 
-Unity 6 URP 17+ 渲染技术实验室。研究方向：PCSS 软阴影、Boids 群集模拟、体积云渲染、全屏后处理特效、CelToon 卡通渲染。
+## 读取顺序
 
-## 技术栈
+1. 根 `AGENTS.md`：跨平台项目入口与安全边界。
+2. `.agents/README.md`：共享 SSOT、所有权和迁移状态。
+3. `.agents/agents/<role>/AGENT.md`：按职责加载 `unity-developer` 或 `meta-developer`。
+4. 按任务读取 `.agents/rules/`、`.agents/knowledge/`、角色 references、templates、CLI、scripts 和 memory。
 
-- **引擎**：Unity 6 (6000.x) + Universal Render Pipeline 17+
-- **Shader**：HLSL / ShaderGraph / Compute Shader
-- **自动化**：unityctl（Editor 远程控制）
-- **脚本执行**：Roslyn（C# 运行时注入）
-- **平台**：macOS / Metal
+## Claude 平台适配层
 
----
+以下内容保留在 `.claude/`，因为它们属于 Claude Code 平台：
 
-## 循环架构 (memory → agent → platform → skill → CLI → script → memory)
-
-```
-┌──────────────────────────────────────────────────────────┐
-│  [1] Memory ←─────────────────────────────────────┐      │
-│  │   .claude/agents/unity-developer/memory/        │      │
-│  │   .claude/rules/                                │      │
-│  │   会话启动加载 → 会话结束更新 (E1-E4)             │      │
-│  ↓                                                  │      │
-│  [2] Agent ───────────────────────────────────┐    │      │
-│  │   .claude/agents/unity-developer.md         │    │      │
-│  │   宪法 C1-C7 + 模式选择 + 退出条件           │    │      │
-│  │   .claude/agents/meta-developer.md          │    │      │
-│  │   体系维护 + 精简去重 (P1-P3)                │    │      │
-│  ↓                                             │    │      │
-│  [3] Platform ───────────────────────────┐    │    │      │
-│  │   agent.md 内 Editor 可用性策略         │    │    │      │
-│  │   Editor 状态 → 流水线深度              │    │    │      │
-│  ↓                                        │    │    │      │
-│  [4] Skill ────────────────────────┐     │    │    │      │
-│  │   .claude/skills/auto-manager/   │     │    │    │      │
-│  │   过程性知识 + 工作流编排          │     │    │    │      │
-│  ↓                                   │     │    │    │      │
-│  [5] CLI ────────────────────┐      │     │    │    │      │
-│  │   unity-developer/cli/unityctl.md  │     │    │    │      │
-│  │   unity-developer/cli/roslyn.md    │     │    │    │      │
-│  ↓                             │      │     │    │    │      │
-│  [6] Script ───────────┐      │      │     │    │    │      │
-│  │   agents/unity-developer/scripts/roslyn/     │      │      │     │    │    │      │
-│  │   scene-query.cs     │      │      │     │    │    │      │
-│  │   scene-organize.cs  │      │      │     │    │    │      │
-│  ↓                       │      │      │     │    │    │      │
-│  [7] → Memory ───────────┘      │      │     │    │    │      │
-│   memory/ 创建 dated 文件 + 更新索引         │    │    │      │
-│   rules/ 追加新错误模式 (grep 去重)           │    │    │      │
-└──────────────────────────────────────────────────────────┘
-```
-
----
+- `settings.json` / `settings.local.json`：权限、模型和本地覆盖。
+- `hooks/`：Claude 生命周期钩子。
+- `rules/`：Claude 的路径限定自动注入层；正文通过相对软链指向 `.agents/rules/`。
+- `.mcp.json`：MCP 注册（存在时保持不变）。
+- `agents/`：旧发现路径兼容壳；角色正文通过软链指向 `.agents/agents/<role>/AGENT.md`。
+- `skills/`：Claude 发现兼容层。共享 skill 的编辑位置是 `.agents/skills/`；在 Claude CLI 可用性验证前，不删除现有兼容副本。
 
 ## 入口门禁 [G0]
 
-> 任何文件写入操作前必须通过此门禁。
+任何文件写入前输出：
 
-**OUTPUT 格式：**
-```
+```text
 ## G0: Framework Check
 Agent: unity-developer | meta-developer
 Action: proceed | load agent first
 ```
 
-- 涉及 `Assets/Mine/` 写入 → Agent 必须为 `unity-developer`，否则先加载。写入必须走 MCP `write_gated`（原生 Write/Edit 已被 settings deny）。
-- 涉及 `.claude/` 写入 → Agent 必须为 `meta-developer`，否则先加载
-- 纯咨询/只读 → 跳过 G0
-- MCP 工具发现：`gate_list` 查看所有门禁和配方；用法速查 → [agents/unity-developer/references/mcp-gate-usage.md](agents/unity-developer/references/mcp-gate-usage.md)（后果验证 v2：链唯一 [g_entry, g_knowledge]，write_gated 内容规范检查，Codex 经 check_norm.py CLI 对等）
-- 🟢 **门禁 = 知识证据 + 后果验证**：任何写入都过 [g_entry, g_knowledge] 走 write_gated——知识声明必须命中真实文件，内容必须符合结构规范（error 阻断 / warning 提示）。Codex 产出自查：`python .mcp/validation/check_norm.py <file>`。
+- Unity 功能、Shader、C#、Editor 验证 → `unity-developer`。
+- agent / skill / reference / rule / 路径体系维护 → `meta-developer`。
+- `Assets/Mine/` 写入必须经过 MCP `g_entry` + `g_knowledge` 与 `write_gated`；Codex 侧使用 `python3 .mcp/validation/check_norm.py <file>` 自查。
+- 删除、移动旧副本或架构切换前，必须保留回退点并列出精确清单；禁止 `git stash --all`。
 
----
+## 运行验证
 
-## 宪法 (C1-C7)
+```bash
+unityctl status
+unityctl bridge start
+unityctl editor run
+```
 
-宪法是项目的最高原则。唯一权威来源：[agents/unity-developer.md](agents/unity-developer.md) — C1-C7 + 模式选择 + 退出条件 + 完整性门禁。
-
----
-
-## 快速参考
-
-- **项目根目录**：`/Users/xiaokangji/Unity/Lab`
-- **关键代码目录**：`Assets/Mine/Shaders/`、`Assets/Mine/Scripts/`
-- **知识库**：`agents/unity-developer/references/`（2026-08-24 自 `Assets/MarkDowns/` 内化迁移，归属 unity-developer）
-- **Editor 检查**：`unityctl status`
-- **Memory**：[agents/unity-developer/memory/MEMORY.md](agents/unity-developer/memory/MEMORY.md)
-- **开发规范**：[.claude/rules/](rules/)
+编译看日志，运行看日志，视觉结果由人工在 Unity Editor / Game View 观察。Unity 业务代码和 `Assets/Mine/` 不属于本架构迁移范围。
 
 ## Agent 路由
 
-| 任务类型 | Agent | 触发关键词 |
-|---------|-------|-----------|
-| Unity 开发（Shader、C#、渲染） | [unity-developer](agents/unity-developer.md) | Shader, HLSL, Compute, RenderGraph, URP, Material |
-| .claude 体系维护 | [meta-developer](agents/meta-developer.md) | agent, skill, reference, .claude, 体系, 结构, 维护 |
-| Codex 落地执行（已规划任务） | exec-developer（Codex 侧） | codex exec、派发、落地、编译修复、写代码 |
-| Codex 自主全流程 | auto-developer（Codex 侧） | 自主、自动、全流程、auto |
+| 任务 | 入口 |
+|---|---|
+| Unity 开发、渲染、脚本和 Editor | `.agents/agents/unity-developer/AGENT.md` |
+| agent 体系、skills、rules、路径与适配层 | `.agents/agents/meta-developer/AGENT.md` |
+| Codex 派发与链路 | `.agents/skills/codex-orchestrate/SKILL.md`、`.agents/skills/codex-bridge/SKILL.md` |
 
-全局路由表在 `~/.claude/agents/default.md`。
+全局路由表仍由 `~/.claude/agents/default.md` 管理，不属于项目共享 SSOT。
 
-> **Codex 侧路由**：需要 Codex 执行时，按 [codex-orchestrate](skills/codex-orchestrate/SKILL.md) skill 派发并路由到 **exec-developer**（`.codex/agents/exec-developer/exec-developer.md`，落地执行边界，任务书驱动）；用户要求自主全流程时路由到 **auto-developer**（`.codex/agents/auto-developer/auto-developer.md`）。Codex 同样执行开发任务（非仅"基础工作"），知识直接读 `.claude/` 权威源（入口指引：`.codex/AGENTS.md`）；`Assets/Mine/` 产出经 Claude review + write_gated 门禁链合入，**Codex 合入前自查规范**：`python .mcp/validation/check_norm.py <file>`（与 write_gated 同一检查）。任务书字段：目标 / 涉及文件 / 约束 / 验收标准 / 模式。
+## 会话收尾
 
-> **架构说明**：`rules/` 和 `skills/` 虽全为 Unity 内容，但因 Claude Code 的路径限定加载（`paths:` frontmatter）和 Skill 发现机制要求它们必须在顶级 `.claude/` 下，无法移入 `agents/unity-developer/`。将来加入非 Unity agent 时，其 rules 和 skills 将共存于同名顶级目录。`references/` 则相反——已按归属归入各 agent（unity-developer 全部渲染知识、meta-developer 体系知识）。规则按域划分：Unity 开发规范（shader-development/compute-shader/csharp-renderpass，`paths:` 限定到 `Assets/Mine/`）与体系架构规则（[meta-architecture.md](rules/meta-architecture.md)，`paths:` 限定到 `.claude/**` + `.mcp/**`）共存于顶层 rules/。
+- 记录改动清单、验证证据和遗留风险。
+- 共享经验写入对应 `.agents/agents/<role>/memory/`，并更新索引；不要写回 `.claude/agents/` 旧副本。
+- 架构阶段独立提交；旧兼容层只有在 Claude、Codex、MCP 和 Unity 验证完成后才可清理。
