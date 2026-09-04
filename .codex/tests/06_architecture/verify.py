@@ -153,12 +153,30 @@ def mcp_hardcodes(texts: dict[Path, str]) -> list[dict[str, object]]:
 def absolute_and_case_hits(texts: dict[Path, str]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     absolute, case = [], []
     for path, text in texts.items():
+        if _skip_absolute_case_scan(path):
+            continue
         for line_number, line in enumerate(text.splitlines(), 1):
             if "/Users/" in line:
                 absolute.append({"file": rel(path), "line": line_number, "text": line.strip()[:240]})
             if ".Codex/" in line or ".Codex\\" in line:
                 case.append({"file": rel(path), "line": line_number, "text": line.strip()[:240]})
     return absolute, case
+
+
+def _skip_absolute_case_scan(path: Path) -> bool:
+    """Strict absolute/case scanning excludes machine-local or transient files:
+    platform settings/hooks (settings.local.json is gitignored), retired Codex
+    config archives, .codex/tmp/ workspace documents, and dated memory snapshots
+    under .agents (historical records keep their original paths by rule).
+    Active .claude/skills compat copies stay in scope so strict mode keeps
+    flagging them until the Phase 7 skill symlink cutover removes them.
+    """
+    relp = rel(path)
+    if relp.startswith((".claude/settings", ".claude/hooks/", ".codex/hooks.json", ".codex/config.toml")):
+        return True
+    if ".codex/tmp/" in relp:
+        return True
+    return re.match(r"^\d{4}-\d{2}-\d{2}", path.name) is not None and "/memory/" in relp
 
 
 def semantic_category(path: str) -> tuple[str, str, str, str]:

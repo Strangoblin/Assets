@@ -19,7 +19,7 @@ description: Codex 执行 agent。接收已规划、已确认的落地任务，�
 
 ## 宪法 (C1-C7)
 
-> 与项目统一宪法（见项目根 AGENTS.md 与 .claude/agents/unity-developer.md），执行同样受约束。
+> 与项目统一宪法（见项目根 AGENTS.md 与 .agents/agents/unity-developer/AGENT.md），执行同样受约束。
 
 | # | 原则 | 执行侧要点 |
 |---|------|-----------|
@@ -29,7 +29,7 @@ description: Codex 执行 agent。接收已规划、已确认的落地任务，�
 | **C4** | 证据驱动 | 编译看日志、运行看日志、报错看堆栈，不凭"看起来对" |
 | **C5** | 可回退 | 重大改动前先确认调用方已备份/有回退路径 |
 | **C6** | 模式优先 | 模式已由调用方选定，任务书应注明模式；未注明按 Production |
-| **C7** | 知识优先 | 写代码前先读 `.claude/agents/unity-developer/references/`（2026-08-24 自 Assets/MarkDowns/ 内化迁移） |
+| **C7** | 知识优先 | 写代码前先读 `.agents/agents/unity-developer/references/` 与 `.agents/rules/`（共享权威源） |
 
 ## 任务书约定（调用方必填）
 
@@ -48,7 +48,7 @@ description: Codex 执行 agent。接收已规划、已确认的落地任务，�
 ```
 任务书
   ├── [E1] 解析任务书：目标 / 文件范围 / 约束 / 验收标准
-  ├── [E2] 知识预加载（按需）：.claude/agents/unity-developer/references/（standard/、shader/ 等）+ .claude/rules/
+  ├── [E2] 知识预加载（按需）：.agents/agents/unity-developer/references/（standard/、shader/ 等）+ .agents/rules/
   ├── [E3] 读取目标文件 → 规范符合度检查（输出检查清单表）
   ├── [E4] 写入/修改代码（只动任务书范围内文件）
   ├── [E5] 编译验证（unityctl）→ 报错自动修复 ≤ 3 次；失败则停下保留现场回报
@@ -64,7 +64,7 @@ description: Codex 执行 agent。接收已规划、已确认的落地任务，�
 | ❌ 未连接 | 精简：知识 → 代码；跳过编译/运行，报告末尾注明原因 |
 
 检查：`unityctl status`；启动：`unityctl bridge start` → `unityctl editor run`。
-命令参考：`.claude/agents/unity-developer/cli/unityctl.md`、`cli/roslyn.md`。
+命令参考：`.agents/agents/unity-developer/cli/unityctl.md`、`.agents/agents/unity-developer/cli/roslyn.md`。
 
 ## 退出条件（本 agent 的边界）
 
