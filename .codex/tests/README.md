@@ -18,6 +18,7 @@
 | 03 | write | 写文件 | workspace-write | output/ 生成 HelloWorld.cs 且内容匹配 |
 | 04 | batch | 批量多文件 | workspace-write | output/ 生成 3 个文件 |
 | 05 | spec | 任务说明书传递 | workspace-write | 产出符合说明书要求 |
+| 06 | architecture | Agent 架构迁移基线与契约 | 只读 | 清单覆盖且已知基线指标稳定 |
 
 ## 运行
 
@@ -32,6 +33,8 @@
 - `expected.md` — 预期结果
 - `verify.sh` — 自动验证（输出 PASS/FAIL）
 - `output/` — 写操作目标（测试产物，可清理）
+
+06_architecture 是只读扫描；它的 `output/` 仅保存被忽略的 JSON 报告。
 
 ⚠️ 测试写文件只允许在各自 `output/` 目录内，不允许触碰项目源码。
 ⚠️ `run.log` / `output/` 为测试产物，不入 git。

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "description": "Phase 1 target ownership allow-list. This file is a contract fixture, not a migration command.",
+  "claude": {
+    "retain": [
+      "CLAUDE.md",
+      "settings.json",
+      "settings.local.json",
+      "hooks/**",
+      "agents/**",
+      "skills/**"
+    ],
+    "notes": "agents/** and skills/** are compatibility-only after shared content is migrated; rules/** remains only if Claude path discovery requires an adapter."
+  },
+  "codex": {
+    "retain": [
+      "AGENTS.md",
+      "INTERFACE.md",
+      "SKILL.md",
+      "config.toml",
+      "config.toml.*",
+      "hooks.json",
+      "hooks/**",
+      "tests/**",
+      "tmp/**",
+      "agents/*.toml",
+      "agents/*/*.md"
+    ],
+    "notes": "Codex runtime configuration, tests, hooks and temporary workspace remain platform-specific."
+  },
+  "shared_target": {
+    "root": ".agents",
+    "roles": ".agents/agents/<role>/AGENT.md",
+    "rules": ".agents/rules/",
+    "references": ".agents/agents/<role>/references/",
+    "templates": ".agents/agents/<role>/templates/",
+    "cli": ".agents/agents/<role>/cli/",
+    "scripts": ".agents/agents/<role>/scripts/",
+    "memory": ".agents/agents/<role>/memory/",
+    "skills": ".agents/skills/"
+  }
+}

@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+"""Phase 1 architecture inventory and migration-contract checks.
+
+Default mode records the known pre-migration baseline and writes an inventory.
+Strict mode is intended for later phases and fails on unresolved architecture
+violations instead of accepting the baseline fixture.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from collections import defaultdict
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[3]
+TEST_ROOT = Path(__file__).resolve().parent
+OUTPUT = TEST_ROOT / "output"
+TEXT_SUFFIXES = {".md", ".toml", ".json", ".py", ".sh", ".cs", ".hlsl", ".shader", ".compute"}
+ARCH_ROOTS = (".agents", ".claude", ".codex", ".mcp")
+BASELINE = {
+    "tracked_claude": 155,
+    "agents_broken_markdown_links": 20,
+    "skill_drift_files": 6,
+    "mcp_hardcoded_claude_files": 3,
+}
+
+
+def rel(path: Path) -> str:
+    return path.relative_to(ROOT).as_posix()
+
+
+def tracked(prefix: str) -> list[str]:
+    result = subprocess.run(
+        ["git", "ls-files", prefix], cwd=ROOT, check=True, capture_output=True, text=True
+    )
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def readable_files() -> list[Path]:
+    files: list[Path] = []
+    for root_name in ARCH_ROOTS:
+        base = ROOT / root_name
+        if not base.exists():
+            continue
+        for path in base.rglob("*"):
+            if (
+                path.is_file()
+                and path.suffix.lower() in TEXT_SUFFIXES
+                and ".venv" not in path.parts
+                and "__pycache__" not in path.parts
+                and not path.name.endswith(".pyc")
+                and "output" not in path.parts
+                and TEST_ROOT not in path.parents
+            ):
+                files.append(path)
+    return sorted(files)
+
+
+def text_map() -> dict[Path, str]:
+    return {path: path.read_text(encoding="utf-8", errors="ignore") for path in readable_files()}
+
+
+def broken_markdown_links(texts: dict[Path, str], root_name: str | None = None) -> list[dict[str, object]]:
+    link_re = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+    broken: list[dict[str, object]] = []
+    for path, text in texts.items():
+        if path.suffix.lower() != ".md" or (root_name and root_name not in path.parts):
+            continue
+        for line_number, line in enumerate(text.splitlines(), 1):
+            for target in link_re.findall(line):
+                target = target.strip().split("#", 1)[0].strip("<>")
+                if not target or target.startswith(("http://", "https://", "mailto:", "/")):
+                    continue
+                if not (path.parent / target).exists():
+                    broken.append({"file": rel(path), "line": line_number, "target": target})
+    return broken
+
+
+def skill_drift(texts: dict[Path, str]) -> list[str]:
+    del texts
+    claude = ROOT / ".claude" / "skills"
+    agents = ROOT / ".agents" / "skills"
+    relative_paths: set[Path] = set()
+    for base in (claude, agents):
+        if base.exists():
+            relative_paths |= {
+                path.relative_to(base)
+                for path in base.rglob("*")
+                if path.is_file() and path.suffix.lower() in TEXT_SUFFIXES and not path.name.endswith(".pyc")
+            }
+    drift: list[str] = []
+    for path in sorted(relative_paths):
+        left, right = claude / path, agents / path
+        if left.is_file() and right.is_file():
+            if hashlib.sha256(left.read_bytes()).digest() != hashlib.sha256(right.read_bytes()).digest():
+                drift.append(path.as_posix())
+    return drift
+
+
+def mcp_hardcodes(texts: dict[Path, str]) -> list[dict[str, object]]:
+    hits: list[dict[str, object]] = []
+    for path, text in texts.items():
+        if ".mcp" not in path.parts or path.suffix != ".py":
+            continue
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if ".claude" in line:
+                hits.append({"file": rel(path), "line": line_number, "text": line.strip()})
+    return hits
+
+
+def absolute_and_case_hits(texts: dict[Path, str]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    absolute, case = [], []
+    for path, text in texts.items():
+        for line_number, line in enumerate(text.splitlines(), 1):
+            if "/Users/" in line:
+                absolute.append({"file": rel(path), "line": line_number, "text": line.strip()[:240]})
+            if ".Codex/" in line or ".Codex\\" in line:
+                case.append({"file": rel(path), "line": line_number, "text": line.strip()[:240]})
+    return absolute, case
+
+
+def semantic_category(path: str) -> tuple[str, str, str, str]:
+    """Return category, proposed target, decision and rationale."""
+    p = Path(path)
+    if path == ".claude/CLAUDE.md":
+        return "platform-entry", ".claude/CLAUDE.md", "compatibility", "Claude fixed entry path must remain available."
+    if path.startswith(".claude/settings") or path.startswith(".claude/hooks/"):
+        suffix = path.removeprefix(".claude/")
+        return "claude-platform", path, "retain", "Claude settings and hooks are platform-specific."
+    if path.startswith(".claude/rules/"):
+        suffix = path.removeprefix(".claude/rules/")
+        return "shared-rule", f".agents/rules/{suffix}", "migrate", "Rule semantics are client-independent."
+    for role in ("unity-developer", "meta-developer"):
+        prefix = f".claude/agents/{role}/"
+        if path.startswith(prefix):
+            suffix = path.removeprefix(prefix)
+            if suffix == "":
+                return "role-directory", f".agents/agents/{role}/", "migrate", "Role content belongs to the shared role layer."
+            if suffix == "AGENT.md":
+                return "role-definition", f".agents/agents/{role}/AGENT.md", "migrate", "Role definition is shared SSOT."
+            category = suffix.split("/", 1)[0]
+            return category, f".agents/agents/{role}/{suffix}", "migrate", "Role-owned knowledge or tooling follows one-to-one mapping."
+    if path.startswith(".claude/skills/"):
+        suffix = path.removeprefix(".claude/skills/")
+        return "skill", f".agents/skills/{suffix}", "review-then-migrate", "Skill content is shared but drift must be reconciled file by file."
+    if path.startswith(".agents/"):
+        return "existing-shared-candidate", path, "retain-review", "Existing .agents content is a candidate target, not an automatic overwrite source."
+    if path.startswith(".codex/"):
+        return "codex-platform", path, "retain", "Codex configuration, hooks, tests and tmp are platform-specific."
+    if path.startswith(".mcp/"):
+        return "execution-gate", path, "retain-update-later", "MCP remains execution infrastructure; only its knowledge roots will change later."
+    return "unknown", path, "review", "No automated ownership rule applies."
+
+
+def make_inventory(texts: dict[Path, str]) -> list[dict[str, object]]:
+    all_candidates = sorted(set(tracked(".claude/") + tracked(".agents/") + tracked(".codex/")))
+    references: dict[str, list[str]] = defaultdict(list)
+    for source in all_candidates:
+        basename = Path(source).name
+        for path, text in texts.items():
+            if path.as_posix().endswith(source):
+                continue
+            if source in text or (basename and basename in text):
+                references[source].append(rel(path))
+    inventory = []
+    for source in all_candidates:
+        category, target, decision, rationale = semantic_category(source)
+        inventory.append({
+            "current_path": source,
+            "semantic_category": category,
+            "proposed_target_path": target,
+            "references": sorted(set(references[source])),
+            "decision": decision,
+            "rationale": rationale,
+        })
+    return inventory
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--strict", action="store_true", help="fail on unresolved baseline issues")
+    args = parser.parse_args()
+
+    texts = text_map()
+    agents_broken = broken_markdown_links(texts, ".agents")
+    drift = skill_drift(texts)
+    hardcodes = mcp_hardcodes(texts)
+    absolute, codex_case = absolute_and_case_hits(texts)
+    inventory = make_inventory(texts)
+
+    summary = {
+        "tracked_claude": len(tracked(".claude/")),
+        "tracked_agents": len(tracked(".agents/")),
+        "tracked_codex": len(tracked(".codex/")),
+        "inventory_entries": len(inventory),
+        "agents_broken_markdown_links": len(agents_broken),
+        "skill_drift_files": len(drift),
+        "skill_drift_groups": len({item.split("/", 1)[0] for item in drift}),
+        "mcp_hardcoded_claude_files": len({item["file"] for item in hardcodes}),
+        "mcp_hardcoded_claude_hits": len(hardcodes),
+        "absolute_path_hits": len(absolute),
+        "codex_case_hits": len(codex_case),
+    }
+
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    (OUTPUT / "migration-inventory.json").write_text(
+        json.dumps({"summary": summary, "entries": inventory}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (OUTPUT / "baseline-findings.json").write_text(
+        json.dumps({
+            "summary": summary,
+            "agents_broken_markdown_links": agents_broken,
+            "skill_drift_files": drift,
+            "mcp_hardcoded_claude": hardcodes,
+            "absolute_path_hits": absolute,
+            "codex_case_hits": codex_case,
+        }, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    errors: list[str] = []
+    if len(inventory) != len(set(item["current_path"] for item in inventory)):
+        errors.append("inventory contains duplicate current_path entries")
+    if len(inventory) < len(tracked(".claude/")):
+        errors.append("inventory does not cover all tracked .claude files")
+
+    if args.strict:
+        if agents_broken:
+            errors.append(f".agents has {len(agents_broken)} broken markdown links")
+        if drift:
+            errors.append(f"skills have {len(drift)} drifted files")
+        if hardcodes:
+            errors.append(f".mcp has {len(hardcodes)} .claude hardcoded references")
+        if absolute:
+            errors.append(f"architecture docs contain {len(absolute)} absolute path hits")
+        if codex_case:
+            errors.append(f"architecture docs contain {len(codex_case)} .Codex case hits")
+    else:
+        for key, expected in BASELINE.items():
+            if summary[key] != expected:
+                errors.append(f"baseline metric {key} changed: expected {expected}, got {summary[key]}")
+
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    print(f"inventory={OUTPUT / 'migration-inventory.json'}")
+    print(f"findings={OUTPUT / 'baseline-findings.json'}")
+    if errors:
+        print("FAIL:")
+        for error in errors:
+            print(f"- {error}")
+        return 1
+    print("PASS: Phase 1 baseline/contract checks")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

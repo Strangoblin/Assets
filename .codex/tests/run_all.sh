@@ -4,7 +4,7 @@
 
 cd "$(dirname "$0")"
 
-TESTS=(01_smoke 02_readonly 03_write 04_batch 05_spec)
+TESTS=(01_smoke 02_readonly 03_write 04_batch 05_spec 06_architecture)
 if [ -n "$1" ]; then TESTS=("$1"); fi
 
 PASS=0; FAIL=0
