@@ -145,7 +145,7 @@ unityctl play exit
 在与 Unity Editor 相同的宿主环境中执行并保持 bridge：
 
 ```bash
-cd /Users/xiaokangji/Unity/Lab
+cd <project-root>
 unityctl bridge stop
 unityctl bridge start
 unityctl bridge status

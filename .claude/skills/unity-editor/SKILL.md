@@ -11,7 +11,7 @@ Control a running Unity Editor from the command line without batch mode.
 
 Run `unityctl status` first to check what's already running. If Unity is already connected, skip straight to commands.
 
-**Platform config (Bridge + availability + troubleshooting):** [../../agents/unity-developer.md](../../agents/unity-developer.md)
+**Platform config (Bridge + availability + troubleshooting):** [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md)
 **Full command reference:** [../../agents/unity-developer/cli/unityctl.md](../../agents/unity-developer/cli/unityctl.md)
 
 ## Verifying Changes

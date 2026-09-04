@@ -84,4 +84,4 @@
 
 - 人工确认效果符合预期
 - 人工决定放弃当前方向
-- 触发兜底退出（@../../agents/unity-developer.md）
+- 触发兜底退出（@../../../agents/unity-developer/AGENT.md）

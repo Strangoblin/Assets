@@ -21,7 +21,7 @@
 
 ## 迁移状态
 
-当前为 Agent 架构重构 Phase 2：目标骨架已建立，旧 `.claude/` 内容尚未移动或切流。Phase 3 起按迁移清单逐项移动，并在删除任何旧副本前完成双平台、MCP 和 Unity 验证。
+当前为 Agent 架构重构 Phase 3：共享 rules、角色定义和角色归属内容已迁入；旧 `.claude` 发现路径保留相对软链兼容壳。skills 漂移裁决、MCP/Claude/Codex 切流和旧副本清理仍在后续阶段执行。
 
 ## 读取顺序
 

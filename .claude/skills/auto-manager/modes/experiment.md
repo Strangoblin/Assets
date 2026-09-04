@@ -93,7 +93,7 @@ G3   → write_gated(path, content, ...)   ← 内容规范检查（error 阻断
 
 ## 跨引用
 
-- 模式选择逻辑 + 对比表：../../agents/unity-developer.md
+- 模式选择逻辑 + 对比表：../../../agents/unity-developer/AGENT.md
 - 编译验证：../capabilities/compile.md
 - 运行时验证：../capabilities/runtime.md
 - 知识预加载：../capabilities/knowledge.md

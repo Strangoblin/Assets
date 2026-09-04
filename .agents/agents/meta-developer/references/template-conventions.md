@@ -1,6 +1,6 @@
 # Template & Content Authoring Conventions
 
-> .claude 代码模板与知识文件（templates/ + references/ 层）的编写规则。meta-developer 维护模板体系时对照；细则权威在模板族 README（下表链接）与 `.claude/rules/`，本文件只做摘要不重述。
+> .agents 代码模板与知识文件（templates/ + references/ 层）的编写规则。meta-developer 维护模板体系时对照；细则权威在模板族 README（下表链接）与 `.agents/rules/`，本文件只做摘要不重述。
 > 演进记录：memory/2026-09-03-template-reference-taxonomy.md（分类决策）；unity-developer/memory/2026-09-03-standard-code-window-family.md、2026-09-03-render-hlsl-template-families.md（后续轮次）。
 
 ## 分类总则

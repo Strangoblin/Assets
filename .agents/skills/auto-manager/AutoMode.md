@@ -7,7 +7,7 @@
 
 ## 宪法
 
-宪法已提取到 agent 层：**[../../agents/unity-developer.md](../../agents/unity-developer.md)** — C1-C7 + 退出条件 + 完整性门禁。
+宪法已提取到 agent 层：**[../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md)** — C1-C7 + 退出条件 + 完整性门禁。
 
 ---
 
@@ -17,10 +17,10 @@
 
 | 内容 | 唯一来源 |
 |------|---------|
-| C1-C7 宪法 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
-| 模式选择逻辑 + 对比表 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
-| Editor 可用性策略 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
-| 退出条件 + 完整性门禁 | [../../agents/unity-developer.md](../../agents/unity-developer.md) |
+| C1-C7 宪法 | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) |
+| 模式选择逻辑 + 对比表 | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) |
+| Editor 可用性策略 | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) |
+| 退出条件 + 完整性门禁 | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) |
 
 ---
 
@@ -73,7 +73,7 @@
 1. 同时满足多个条件 → 按优先级：**modes > capabilities > agents > rules > cli > scripts**
 2. 超过 150 行 → 考虑拆分
 3. 无法明确分类 → 先放入 `capabilities/`，标记 `// TODO: classify`
-4. 改动涉及 Constitution → 必须先更新 `../../agents/unity-developer.md`
+4. 改动涉及 Constitution → 必须先更新 `../../agents/unity-developer/AGENT.md`
 
 ---
 
@@ -105,11 +105,11 @@
 
 | 层 | 路径 | 职责 |
 |----|------|------|
-| **Agent** | [../../agents/unity-developer.md](../../agents/unity-developer.md) | C1-C7 宪法 + 模式选择 + 退出条件 + 完整性门禁 |
-| **Platform** | [../../agents/unity-developer.md](../../agents/unity-developer.md) | Editor Bridge + 可用性策略 |
+| **Agent** | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) | C1-C7 宪法 + 模式选择 + 退出条件 + 完整性门禁 |
+| **Platform** | [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md) | Editor Bridge + 可用性策略 |
 | **CLI** | [../../agents/unity-developer/cli/unityctl.md](../../agents/unity-developer/cli/unityctl.md) | unityctl 完整命令参考 |
 | **CLI** | [../../agents/unity-developer/cli/roslyn.md](../../agents/unity-developer/cli/roslyn.md) | Roslyn 脚本食谱 + 命令速查 |
 | **Scripts** | [../../agents/unity-developer/scripts/roslyn/](../../agents/unity-developer/scripts/roslyn/) | 可复用 Roslyn C# 脚本 |
-| **Knowledge** | [../../references/](../../references/) | 内化知识库（结构规范 + 模板 + API 差异，2026-08-24 自 Assets/MarkDowns/ 迁移） |
+| **Knowledge** | [../../agents/unity-developer/references/](../../agents/unity-developer/references/) | 内化知识库（结构规范 + 模板 + API 差异，2026-08-24 自 Assets/MarkDowns/ 迁移） |
 | **Learnings** | [../../rules/shader-development.md](../../rules/shader-development.md) | 编译/运行时错误诊断表 |
 | **Learnings** | [../../agents/unity-developer/memory/2025-06-15-safety-lessons.md](../../agents/unity-developer/memory/2025-06-15-safety-lessons.md) | 安全红线 + 经验教训 |

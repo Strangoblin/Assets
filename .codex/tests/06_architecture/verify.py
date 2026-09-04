@@ -33,9 +33,17 @@ PHASE2_REQUIRED = [
     ".agents/interfaces/README.md",
     ".agents/interfaces/knowledge-paths.md",
 ]
-BASELINE = {
+# Historical fixture retained for explaining the migration delta.  The active
+# default fixture tracks the current Phase 3 intermediate architecture.
+PRE_MIGRATION_BASELINE = {
     "tracked_claude": 155,
     "agents_broken_markdown_links": 20,
+    "skill_drift_files": 6,
+    "mcp_hardcoded_claude_files": 3,
+}
+PHASE3_BASELINE = {
+    "tracked_claude": 49,
+    "agents_broken_markdown_links": 0,
     "skill_drift_files": 6,
     "mcp_hardcoded_claude_files": 3,
 }
@@ -85,9 +93,21 @@ def broken_markdown_links(texts: dict[Path, str], root_name: str | None = None) 
         for line_number, line in enumerate(text.splitlines(), 1):
             for target in link_re.findall(line):
                 target = target.strip().split("#", 1)[0].strip("<>")
-                if not target or target.startswith(("http://", "https://", "mailto:", "/")):
+                # Examples in validation rules may intentionally contain glob or
+                # regex syntax rather than a concrete Markdown link.
+                if (
+                    not target
+                    or target.startswith(("http://", "https://", "mailto:", "/"))
+                    or "*" in target
+                    or target.startswith(".*")
+                ):
                     continue
-                if not (path.parent / target).exists():
+                candidate = path.parent / target
+                # Reference documents use both file-relative links and repository-
+                # relative asset links such as Assets/Mine/... .
+                if not candidate.exists() and (ROOT / target).exists():
+                    candidate = ROOT / target
+                if not candidate.exists():
                     broken.append({"file": rel(path), "line": line_number, "target": target})
     return broken
 
@@ -238,6 +258,7 @@ def main() -> int:
     phase2_errors = phase2_contract()
 
     summary = {
+        "fixture": "phase3",
         "tracked_claude": len(tracked(".claude/")),
         "tracked_agents": len(tracked(".agents/")),
         "tracked_codex": len(tracked(".codex/")),
@@ -287,9 +308,9 @@ def main() -> int:
         if codex_case:
             errors.append(f"architecture docs contain {len(codex_case)} .Codex case hits")
     else:
-        for key, expected in BASELINE.items():
+        for key, expected in PHASE3_BASELINE.items():
             if summary[key] != expected:
-                errors.append(f"baseline metric {key} changed: expected {expected}, got {summary[key]}")
+                errors.append(f"Phase 3 fixture metric {key} changed: expected {expected}, got {summary[key]}")
 
     print(json.dumps(summary, ensure_ascii=False, indent=2))
     print(f"inventory={OUTPUT / 'migration-inventory.json'}")
@@ -299,7 +320,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print("PASS: Phase 1 baseline/contract checks + Phase 2 scaffold contract")
+    print("PASS: Phase 3 migration fixture/contract checks + Phase 2 scaffold contract")
     return 0
 
 

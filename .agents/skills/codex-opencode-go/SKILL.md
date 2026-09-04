@@ -104,5 +104,5 @@ curl -s "https://opencode.ai/zen/go/v1/models" -H "Authorization: Bearer $OPENAI
 
 ## 与 CC-Switch 的关系
 
-- **Codex → OpenCode Go**：仍走 CC-Switch 本地代理（15721），Codex 走 Anthropic Messages 格式，需要 CC-Switch 做翻译
+- **项目 Agent → OpenCode Go**：仍走 CC-Switch 本地代理（15721），Claude 走 Anthropic Messages 格式，需要 CC-Switch 做翻译
 - **Codex → OpenCode Go**：**直连**（responses 原生格式），与 CC-Switch 完全无关

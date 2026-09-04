@@ -31,4 +31,4 @@ Unity 6 + URP 17+ 渲染技术实验室，涉及 Shader / HLSL / Compute / Rende
 
 ## 迁移状态
 
-当前为 Agent 架构重构 Phase 2：共享骨架已建立，但旧 `.claude` 内容尚未移动，平台读取链尚未切换。后续阶段必须按迁移清单逐项验证后再切流或清理。
+当前为 Agent 架构重构 Phase 3：共享 rules、角色定义和角色归属内容已迁入 `.agents`；旧 `.claude` 发现路径保留兼容软链。skills、MCP/Claude/Codex 切流和旧副本清理仍需后续验证。

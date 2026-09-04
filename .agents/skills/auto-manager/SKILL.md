@@ -23,7 +23,7 @@ argument-hint: "<task description>"
 ```
 [G0] 框架入口
   OUTPUT: ## G0: Framework Check — Agent: unity-developer | NOT LOADED
-  └── NOT LOADED → Read ../../agents/unity-developer.md → 重试
+  └── NOT LOADED → Read ../../agents/unity-developer/AGENT.md → 重试
 
 [G1] 模式确认
   OUTPUT: ## G1: Mode Selection — Mode: <mode> | Reason: <why>

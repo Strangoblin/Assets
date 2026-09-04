@@ -53,7 +53,7 @@ When acting as a **Project Architect**, approach planning with:
 
 ### 1. Project Architect Role Definition
 
-When starting a project, explicitly establish Codex as the **Project Architect** with clear responsibilities:
+When starting a project, explicitly establish Claude as the **Project Architect** with clear responsibilities:
 
 **Role:** System Architect and Planning Specialist
 **Responsibilities:**

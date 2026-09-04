@@ -45,7 +45,7 @@
 ## meta-developer 如何使用
 
 ```
-1. ls .claude/agents/*.md | grep -v meta-developer
+1. find .agents/agents -maxdepth 2 -name AGENT.md | grep -v meta-developer
    → 找到所有被维护 agent
 
 2. 读取每个 agent 的"自描述"段

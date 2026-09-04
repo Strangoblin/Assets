@@ -1,3 +1,17 @@
-# Unity templates 索引
+# Unity Developer Templates
 
-Phase 3 迁移后，本目录存放按文件类型分组的新建模板。模板是产出格式参考，不是规则权威；硬规则位于 `.agents/rules/`。
+Templates are classified by actual responsibility, not by file extension.
+
+## Standard
+
+- [standard/](standard/) — function-independent code skeletons + documentation templates
+
+## Script
+
+- [script/](script/) — responsibility families: Baker / Window / Generator / Manager / Controller
+
+## Shader Features
+
+- [shader/](shader/) — feature families; each family directory keeps only `README.md` as markdown, the rest are code template bodies
+
+A `.cs` file belongs under `shader/` when it is a RendererFeature, RenderPass, Volume, or other shader-feature support script; an `EditorWindow` shell belongs under `script/window/`. A standalone `.hlsl` include library shared across effects belongs under `shader/hlsl/`; a private per-effect library sits next to its shader (the `shader/render/` effect-shader + effect-function pair).

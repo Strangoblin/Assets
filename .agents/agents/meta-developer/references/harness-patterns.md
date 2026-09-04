@@ -88,7 +88,7 @@ mode/production.md           → 定义 [G0]→[G1]→[G2]→[G3]→P3→...
 | **Capability** (能力) | 决策分支树 + OUTPUT 格式 | rules/, 领域路径 | agents/, 具体脚本文件名 |
 | **Routing** (路由) | mode 名, agent 名 | SKILL.md, CLAUDE.md | 不嵌入 domain 逻辑 |
 
-> 反例：compile.md 引用 `../../../agents/unity-developer.md 兜底退出` ← capability 跨层引用 agent
+> 反例：compile.md 引用 `../../../agents/unity-developer/AGENT.md 兜底退出` ← capability 跨层引用 agent
 > 正例：compile.md 写 "暂停，报告 mode 层处理退出" ← capability 不知道 agent 存在
 
 ---
