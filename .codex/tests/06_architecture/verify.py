@@ -22,6 +22,17 @@ TEST_ROOT = Path(__file__).resolve().parent
 OUTPUT = TEST_ROOT / "output"
 TEXT_SUFFIXES = {".md", ".toml", ".json", ".py", ".sh", ".cs", ".hlsl", ".shader", ".compute"}
 ARCH_ROOTS = (".agents", ".claude", ".codex", ".mcp")
+PHASE2_REQUIRED = [
+    ".agents/README.md",
+    ".agents/agents/README.md",
+    ".agents/agents/unity-developer/AGENT.md",
+    ".agents/agents/meta-developer/AGENT.md",
+    ".agents/rules/README.md",
+    ".agents/knowledge/README.md",
+    ".agents/knowledge/unity/README.md",
+    ".agents/interfaces/README.md",
+    ".agents/interfaces/knowledge-paths.md",
+]
 BASELINE = {
     "tracked_claude": 155,
     "agents_broken_markdown_links": 20,
@@ -157,6 +168,38 @@ def semantic_category(path: str) -> tuple[str, str, str, str]:
     return "unknown", path, "review", "No automated ownership rule applies."
 
 
+def phase2_contract() -> list[str]:
+    """Validate the shared-core scaffold without requiring the later cutover."""
+    errors: list[str] = []
+    missing = [path for path in PHASE2_REQUIRED if not (ROOT / path).is_file()]
+    if missing:
+        errors.append(f"Phase 2 scaffold missing: {', '.join(missing)}")
+
+    root_entry = ROOT / "AGENTS.md"
+    if root_entry.is_symlink():
+        errors.append("root AGENTS.md must be a platform-neutral regular file after Phase 2")
+    if root_entry.is_file():
+        entry = root_entry.read_text(encoding="utf-8", errors="ignore")
+        for marker in (".agents/README.md", ".agents/agents/", ".agents/rules/", ".agents/knowledge/"):
+            if marker not in entry:
+                errors.append(f"root AGENTS.md does not expose shared entry: {marker}")
+
+    shared_readme = ROOT / ".agents" / "README.md"
+    if shared_readme.is_file():
+        text = shared_readme.read_text(encoding="utf-8", errors="ignore")
+        for marker in ("ssot", "禁止", ".agents/skills/"):
+            if marker.lower() not in text.lower():
+                errors.append(f".agents/README.md missing ownership marker: {marker}")
+
+    paths = ROOT / ".agents" / "interfaces" / "knowledge-paths.md"
+    if paths.is_file():
+        text = paths.read_text(encoding="utf-8", errors="ignore")
+        for marker in ("knowledge id", "project-root", "git rev-parse", "basename"):
+            if marker.lower() not in text.lower():
+                errors.append(f"knowledge path contract missing marker: {marker}")
+    return errors
+
+
 def make_inventory(texts: dict[Path, str]) -> list[dict[str, object]]:
     all_candidates = sorted(set(tracked(".claude/") + tracked(".agents/") + tracked(".codex/")))
     references: dict[str, list[str]] = defaultdict(list)
@@ -192,6 +235,7 @@ def main() -> int:
     hardcodes = mcp_hardcodes(texts)
     absolute, codex_case = absolute_and_case_hits(texts)
     inventory = make_inventory(texts)
+    phase2_errors = phase2_contract()
 
     summary = {
         "tracked_claude": len(tracked(".claude/")),
@@ -205,6 +249,7 @@ def main() -> int:
         "mcp_hardcoded_claude_hits": len(hardcodes),
         "absolute_path_hits": len(absolute),
         "codex_case_hits": len(codex_case),
+        "phase2_contract_errors": len(phase2_errors),
     }
 
     OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -224,7 +269,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    errors: list[str] = []
+    errors: list[str] = list(phase2_errors)
     if len(inventory) != len(set(item["current_path"] for item in inventory)):
         errors.append("inventory contains duplicate current_path entries")
     if len(inventory) < len(tracked(".claude/")):
@@ -254,7 +299,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print("PASS: Phase 1 baseline/contract checks")
+    print("PASS: Phase 1 baseline/contract checks + Phase 2 scaffold contract")
     return 0
 
 

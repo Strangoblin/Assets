@@ -1,6 +1,6 @@
-# 06_architecture — Phase 1 contract baseline
+# 06_architecture — Phase 1/2 contract baseline
 
-This test is intentionally read-only against the project architecture. It generates
+This test is intentionally read-only against legacy project architecture. It validates the Phase 2 shared-core scaffold and generates
 ignored reports under `output/` and verifies that the known pre-migration metrics
 remain explainable until a migration phase updates the fixture.
 
