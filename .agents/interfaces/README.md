@@ -5,5 +5,6 @@
 | 契约 | 内容 |
 |---|---|
 | `knowledge-paths.md` | 知识 ID、规范路径与 project-root resolver |
+| `project-structure.md` | Agent 架构域拓扑：分层模型、各层内容清单与维护规则 |
 
 平台专属接口仍分别保留在 `.claude/`、`.codex/`；执行实现仍保留在 `.mcp/`。
