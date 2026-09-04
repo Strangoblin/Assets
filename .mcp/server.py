@@ -52,7 +52,7 @@ async def gate_pass(gate_id: str, agent: str = "", mode: str = "", reason: str =
 
     实质门禁（配方内）:
       g_entry: agent="unity-developer"
-      g_knowledge: loaded_files="shader-structure.md, script-structure.md", status="COMPLETE"
+      g_knowledge: loaded_files="unity/standard/shader/shader-structure.md, unity/standard/script/script-structure.md", status="COMPLETE"
     退役门禁（调用返回 GATE_NOT_IN_RECIPE）:
       g_mode → 模式走 gate_set_recipe(name)
       g_script / g_file → 走 write_gated 注解参数

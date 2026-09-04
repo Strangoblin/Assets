@@ -37,14 +37,14 @@ gate_set_recipe → gate_pass(g_entry) → gate_pass(g_knowledge) → write_gate
 ```
 1. gate_set_recipe("Production")   ← 新任务先声明模式（旧状态会清空）
 2. gate_pass(g_entry, agent="unity-developer")
-   gate_pass(g_knowledge, loaded_files="shader-structure.md, script-structure.md", status="COMPLETE")
+   gate_pass(g_knowledge, loaded_files="unity/standard/shader/shader-structure.md, unity/standard/script/script-structure.md", status="COMPLETE")
 3. write_gated(path, content)      ← 全量文件内容；成功后可继续写（门禁状态保留）
 ```
 
 ## g_knowledge 铁律
 
 - **先真实读取**对应知识文件，再申报 `status="COMPLETE"`——申报不是仪式，声明条目会被解析校验
-- 高优先级必读：`shader-structure.md`（shader 写入）+ `script-structure.md`（C# 写入），两者都声明
+- 高优先级必读：`unity/standard/shader/shader-structure.md`（shader 写入）+ `unity/standard/script/script-structure.md`（C# 写入），两者都声明
 - 参考实现等代码文件用项目相对路径声明（如 `Assets/Mine/Shaders/Render/PBRToon/PBRToon.shader`）
 - 编造文件名 → `G15_UNRESOLVED_FILE` DENIED
 

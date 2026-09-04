@@ -47,7 +47,7 @@ GOOD_SHADER = '''Shader "Test/OK"
 }
 '''
 
-HIGH_PRIO = "shader-structure.md, script-structure.md"
+HIGH_PRIO = "unity/standard/shader/shader-structure.md, unity/standard/script/script-structure.md"
 
 
 def self_check():
