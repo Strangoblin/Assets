@@ -24,7 +24,13 @@
       "tests/**",
       "tmp/**",
       "agents/*.toml",
-      "agents/*/*.md"
+      "agents/*/*.md",
+      "agents/unity-developer",
+      "agents/meta-developer",
+      "rules",
+      "skills",
+      "knowledge",
+      "interfaces"
     ],
     "notes": "Codex runtime configuration, tests, hooks and temporary workspace remain platform-specific."
   },

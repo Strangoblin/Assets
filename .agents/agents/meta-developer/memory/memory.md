@@ -1,6 +1,6 @@
 # Meta Developer — Memory Index
 
-> 按日期命名的 memory 文件索引。每次修改 .claude 体系后追加。
+> 按日期命名的 memory 文件索引。每次修改共享 agent 体系或平台适配层后追加。
 
 ---
 
@@ -9,6 +9,7 @@
 | 文件 | 日期 | 摘要 |
 |------|------|------|
 | [2026-09-04-agent-architecture-cutover.md](2026-09-04-agent-architecture-cutover.md) | 2026-09-04 | 架构解耦收尾 P0-P3 + skills 软链切流（已执行 fdf9106，人工确认） — 最终验收全绿（fixture phase7） |
+| [2026-09-04-codex-compatibility-links.md](2026-09-04-codex-compatibility-links.md) | 2026-09-04 | Codex 适配层补齐指向 `.agents/` 的相对软链，并加入架构契约测试 |
 | [2026-09-01-gate-state-persistence.md](2026-09-01-gate-state-persistence.md) | 2026-09-01 | NO_RECIPE 根因 = MCP server 空闲重启清空进程内状态；修复 = state.json 持久化 + 原子写 + 启动恢复 + reset 清文件 |
 | [2026-09-03-unityctl-bridge-host-isolation.md](2026-09-03-unityctl-bridge-host-isolation.md) | 2026-09-03 | UnityCtl bridge 宿主/网络命名空间隔离诊断与共享宿主恢复流程 |
 | [2026-09-04-interior-map-window-placement.md](2026-09-04-interior-map-window-placement.md) | 2026-09-04 | InteriorMap Baker Window 保留 GUID 归位功能 Editor 目录，并同步 window/baker 模板范例路径 |

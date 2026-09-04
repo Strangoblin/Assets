@@ -19,6 +19,21 @@ Unity 6 URP 17+ 渲染技术实验室的 **Codex 开发侧**。你与 Claude 对
    - `.agents/skills/` — 共享 skills 唯一编辑位置；本平台 skill 用法见 `.codex/SKILL.md`
    - `.codex/agents/<agent>/<agent>.md` — 本任务的身份边界（exec-developer / auto-developer）
 
+## 共享内容兼容别名（只读）
+
+为兼容需要从 `.codex/` 相对路径发现共享内容，以下路径是仓库内相对软链；它们不是第二份权威源，也不应在链接路径下直接编辑：
+
+| Codex 兼容路径 | 共享权威目标 |
+|---|---|
+| `.codex/agents/unity-developer` | `.agents/agents/unity-developer` |
+| `.codex/agents/meta-developer` | `.agents/agents/meta-developer` |
+| `.codex/rules` | `.agents/rules` |
+| `.codex/skills` | `.agents/skills` |
+| `.codex/knowledge` | `.agents/knowledge` |
+| `.codex/interfaces` | `.agents/interfaces` |
+
+Codex 的正常读取入口仍是根 `AGENTS.md` → `.agents/README.md`；这些软链只提供与 Claude 兼容层一致的路径别名，不改变共享单源规则。
+
 ## 开发规则（快速版，完整规范见 .agents/agents/unity-developer/AGENT.md 与 .agents/rules/）
 
 1. **安全优先**：删除操作先列清单、人工确认。`git stash --all` 永久禁止。

@@ -34,6 +34,8 @@
 | `.codex/INTERFACE.md` | 本文档：接口契约 | 双边 |
 | `.codex/SKILL.md` | codex-opencode-go 接入手册的 **Codex 侧镜像**（权威源在 `.agents/skills/codex-opencode-go/SKILL.md`；镜像自动生成或同步，不手改） | 同步 |
 | `.codex/agents/` | Codex 侧 agent：`unity-developer.toml` / `meta-developer.toml`（运行时角色适配，正文指向共享 AGENT.md）、`auto-developer/`、`exec-developer/`（角色文档） | 双边 |
+| `.codex/agents/unity-developer/`、`.codex/agents/meta-developer/` | 共享角色目录的只读相对软链；不承载 Codex 专属运行时适配 | 共享结构同步 |
+| `.codex/rules/`、`.codex/skills/`、`.codex/knowledge/`、`.codex/interfaces/` | 共享目录的只读相对软链；仅作 Codex 路径兼容别名 | 共享结构同步 |
 | `.codex/config.toml.bak-20260825` | 项目级 config 归档（退役，勿恢复） | — |
 | `~/.codex/config.toml` | 实际生效的直连配置（主模型 / review_model / provider / catalog） | 双边 |
 | `~/.codex/auth.json` | API key（不入 git，chmod 600） | 双边 |
@@ -52,6 +54,7 @@
 
 - 源：`.agents/`（AGENT.md、rules/、references/、skills/、memory/）——**共享权威知识源，Codex 直接读取**
 - 方向：共享正文只在 `.agents/` 编辑一次；`.codex/` 只在入口条目变化（路径/清单调整）时同步 `.codex/AGENTS.md` 与 `.codex/SKILL.md`（镜像），不回写
+- 软链：`.codex/agents/{unity-developer,meta-developer}`、`.codex/{rules,skills,knowledge,interfaces}` 只提供相对路径兼容，不得在 `.codex/` 软链目标下创建第二份正文
 - 触发：入口条目变化时由维护方更新（codex-bridge skill）；**共享知识内容变更无需重编译本入口**（Codex 读源）
 - Codex 侧需要新规则 → 在 `.codex/AGENTS.md` 顶部注释中标注建议，由共享维护方在 `.agents/` 落盘后生效
 - 编辑共享层或平台边界前：先读 `.agents/rules/meta-architecture.md`（链路保障——改一侧必须同步另一侧；`.agents` ↔ `.claude` / `.codex` ↔ `.mcp` 并行层）

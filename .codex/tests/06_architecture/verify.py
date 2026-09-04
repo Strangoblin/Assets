@@ -62,6 +62,15 @@ PHASE7_BASELINE = {
     "mcp_hardcoded_claude_files": 0,
 }
 
+CODEX_SHARED_LINKS = {
+    ".codex/agents/unity-developer": "../../.agents/agents/unity-developer",
+    ".codex/agents/meta-developer": "../../.agents/agents/meta-developer",
+    ".codex/rules": "../.agents/rules",
+    ".codex/skills": "../.agents/skills",
+    ".codex/knowledge": "../.agents/knowledge",
+    ".codex/interfaces": "../.agents/interfaces",
+}
+
 
 def rel(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
@@ -220,9 +229,26 @@ def semantic_category(path: str) -> tuple[str, str, str, str]:
     return "unknown", path, "review", "No automated ownership rule applies."
 
 
+def codex_shared_link_errors() -> list[str]:
+    """Require Codex compatibility paths to remain relative links into .agents."""
+    errors: list[str] = []
+    for link, target in CODEX_SHARED_LINKS.items():
+        path = ROOT / link
+        if not path.is_symlink():
+            errors.append(f"Codex shared compatibility path is not a symlink: {link}")
+            continue
+        actual = path.readlink().as_posix()
+        if actual != target:
+            errors.append(f"Codex shared link target mismatch: {link} -> {actual!r}, expected {target!r}")
+        if not path.exists():
+            errors.append(f"Codex shared link is broken: {link} -> {target}")
+    return errors
+
+
 def phase2_contract() -> list[str]:
     """Validate the shared-core scaffold without requiring the later cutover."""
     errors: list[str] = []
+    errors.extend(codex_shared_link_errors())
     missing = [path for path in PHASE2_REQUIRED if not (ROOT / path).is_file()]
     if missing:
         errors.append(f"Phase 2 scaffold missing: {', '.join(missing)}")
