@@ -21,7 +21,7 @@
 
 ## 迁移状态
 
-当前为 Agent 架构重构 Phase 4：共享 rules、角色定义、角色归属内容和 MCP knowledge roots 已切换到 `.agents`；旧 `.claude` 发现路径保留相对软链兼容壳。Claude/Codex 适配层切流、skills 兼容验证和旧副本清理仍在后续阶段执行。
+当前为 Agent 架构重构 Phase 6：共享 rules、角色定义、角色归属内容和 MCP knowledge roots 已切换到 `.agents`；旧 `.claude` 发现路径保留相对软链兼容壳（agent/rules 已验证），`.codex/` 已切为薄适配入口。待办（需人工确认）：`.claude/skills/` 逐 skill 软链切流与 Phase 7 旧副本清理。
 
 ## 读取顺序
 
