@@ -29,7 +29,8 @@ Codex 完成 Phase 2-4(共享层迁移 + MCP 切流)后交接 Claude 验证与�
 - 方案三(镜像)= 现状,漂移源头
 - **裁决:方案二 — `.claude/skills/<name>` 逐个改为相对软链 → `.agents/skills/<name>`**,发现入口不变、正文单源、漂移归零
 - **2026-09-04 同日执行**(人工确认后,提交 `fdf9106`):32 个 tracked 副本删除 + 9 条相对软链;文件集双向一致核对通过;`git rm` 遗留空 references 目录与嵌套软链已清理(教训:`git rm` 后目录仍存时 `ln -s` 会把软链建进目录内部,应先确认目录清空)
-- 验证:strict 全绿(drift 6→0、absolute 1→0);技能列表即时重载(会话内已见 auto-manager 从 `.agents` 载入);**最终发现链确认 = 重启 Claude 会话后技能可加载**
+- 验证:strict 全绿(drift 6→0、absolute 1→0);**重启会话后最终确认(2026-09-04):9/9 项目技能进入发现清单,其中 7 个(auto-manager/codex-bridge/dirtybitgames-unity-editor/dwsy-project-planner/sickn33-unity-developer/unity-editor/unityctl-plugins)全局 `~/.claude/skills/` 无同名实体 → 只能经项目软链发现,机制实证通过**
+- 注意:`codex-opencode-go`、`codex-orchestrate` 与全局 `~/.claude/skills/` 同名物理目录并存,全局同名可能遮蔽项目软链,不能作为项目链独立证据;另有 `~/.agents/skills/` 全局侧 5 项 vs `~/.claude/skills/` 3 项(`xthelper-filter`/`xthelper-skills` 无发现入口),全局迁移未完成,不属本仓库范围
 - 回滚 = `git revert fdf9106`
 
 ## Codex 适配层切流(Phase 6 完成)
@@ -46,7 +47,7 @@ Codex 完成 Phase 2-4(共享层迁移 + MCP 切流)后交接 Claude 验证与�
 |----|---------|---------|
 | `.claude/agents/*.md` | 相对软链 → `.agents/agents/<role>/AGENT.md`(实测发现正常) | Claude/Codex/MCP/Unity 四链验证后,人工确认 |
 | `.claude/rules/*.md` | 相对软链 → `.agents/rules/*.md`(实测注入正常) | 同上 |
-| `.claude/skills/*` | 9 条相对软链(实体已删,`fdf9106`) | 已退役;发现链最终确认 = 重启会话 |
+| `.claude/skills/*` | 9 条相对软链(实体已删,`fdf9106`) | 已退役;2026-09-04 重启后 9/9 可发现(7 个无全局同名,实证) |
 | `.claude/agents/<role>/` 空目录壳 | memory/references/cli/scripts/templates 空壳 | 与软链退役同批 |
 
 - `.claude/settings.local.json` 为机器本地(gitignored),verify 扫描已豁免
@@ -65,4 +66,5 @@ unityctl status                                        # 见最终验收
 ```
 
 - 默认 fixture 在 skills 切流后随 `fdf9106` 失效(49/6 对不上 26/0),已新增 `PHASE7_BASELINE` 闭包基线(历史 PRE_MIGRATION/PHASE3/PHASE4 保留为迁移差值说明)
-- 提交:`docs(agent-architecture): mark skills cutover and strict acceptance green`(含 verify.py fixture 推进)。
+- 提交:`docs(agent-architecture): mark skills cutover and strict acceptance green`(含 verify.py fixture 推进)+ `docs(agent-architecture): refresh cutover memory index row`
+- 重启后探针(2026-09-04):unityctl status → Editor [+] Running / Bridge [+] Running(PID 38208)/ Connection [+] connected;四链(Claude 发现/Codex/MCP/Unity)全部闭合。
