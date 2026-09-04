@@ -17,8 +17,8 @@ ALLOWED_STATUS = {"COMPLETE"}  # PARTIAL 已废弃 — 未读全即 DENIED
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 KB_ROOTS = [
-    os.path.join(PROJECT_ROOT, ".claude", "agents", "unity-developer", "references"),
-    os.path.join(PROJECT_ROOT, ".claude", "rules"),
+    os.path.join(PROJECT_ROOT, ".agents", "agents", "unity-developer", "references"),
+    os.path.join(PROJECT_ROOT, ".agents", "rules"),
 ]
 
 

@@ -81,7 +81,7 @@ def validate_path(path: str) -> dict:
     allowed_prefixes = [
         os.path.join(PROJECT_ROOT, "Assets/Mine/Shaders"),
         os.path.join(PROJECT_ROOT, "Assets/Mine/Scripts"),
-        os.path.join(PROJECT_ROOT, ".claude", "agents", "unity-developer", "scripts", "roslyn"),
+        os.path.join(PROJECT_ROOT, ".agents", "agents", "unity-developer", "scripts", "roslyn"),
         os.path.join(PROJECT_ROOT, "tmp"),
     ]
 

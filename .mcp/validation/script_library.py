@@ -5,7 +5,7 @@ from typing import Optional
 
 # 项目根目录（.mcp 在项目根下）
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-SCRIPTS_DIR = os.path.join(PROJECT_ROOT, ".claude", "agents", "unity-developer", "scripts", "roslyn")
+SCRIPTS_DIR = os.path.join(PROJECT_ROOT, ".agents", "agents", "unity-developer", "scripts", "roslyn")
 
 # ── 固定脚本库 ──
 KNOWN_SCRIPTS: dict[str, str] = {
