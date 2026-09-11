@@ -14,6 +14,7 @@ Shader "Custom/SSC"
 
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
     #include "Assets/Mine/Special/HLSL/DeclareCustomTexture.hlsl"
@@ -23,7 +24,6 @@ Shader "Custom/SSC"
     TEXTURE3D(_MainTex3D);
     SAMPLER(sampler_MainTex3D);
     TEXTURE2D_X(_SSCTex);
-    TEXTURE2D_X(_MainTex);
 
     CBUFFER_START(UnityPerMaterial)
         float4 _BaseColorA;
@@ -33,18 +33,6 @@ Shader "Custom/SSC"
         float _Jitter;
         int _Count;
     CBUFFER_END
-
-    struct Attributes
-    {
-        float4 positionOS : POSITION;
-        float2 uv : TEXCOORD0;
-    };
-
-    struct Varyings
-    {
-        float4 positionCS : SV_POSITION;
-        float2 uv : TEXCOORD0;
-    };
 
     float3 ReconstructWorldPos(float2 uv)
     {
@@ -145,17 +133,9 @@ Shader "Custom/SSC"
             tCurrent += step; \
         } \
 
-    Varyings Vert(Attributes input)
-    {
-        Varyings output;
-        output.positionCS = TransformObjectToHClip(input.positionOS);
-        output.uv = input.uv;
-        return output;
-    }
-
     half4 Frag_SSC(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float3 positionWS = ReconstructWorldPos(uv);
         float3 cameraPosWS = GetCameraPositionWS();
 
@@ -231,8 +211,8 @@ Shader "Custom/SSC"
 
     half4 Frag_Composite(Varyings input) : SV_Target
     {
-        float4 cloudColor = SampleCustomTexture(_SSCTex, sampler_LinearClamp, input.uv);
-        float4 sceneColor = SampleCustomTexture(_MainTex, sampler_LinearClamp, input.uv);
+        float4 cloudColor = SampleCustomTexture(_SSCTex, sampler_LinearClamp, input.texcoord);
+        float4 sceneColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
         return lerp(sceneColor, cloudColor, cloudColor.a);
     }
     ENDHLSL
@@ -250,6 +230,7 @@ Shader "Custom/SSC"
             HLSLPROGRAM
             #pragma multi_compile _ SSC_NOISE_TEX2DR SSC_NOISE_TEX2DRG SSC_NOISE_TEX3DXYZ
             #pragma multi_compile _ SSC_RAY_COUNT_64 SSC_RAY_COUNT_128 SSC_RAY_COUNT_256
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_SSC
             ENDHLSL
@@ -260,6 +241,7 @@ Shader "Custom/SSC"
             Name "Composite"
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_Composite
             ENDHLSL

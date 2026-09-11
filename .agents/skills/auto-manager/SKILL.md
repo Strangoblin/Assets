@@ -1,13 +1,13 @@
 ---
 name: autoagent
 description: >-
-  Adaptive mode router for ALL Unity project tasks. PROACTIVELY invoke this
+  Adaptive mode router for Unity implementation tasks. PROACTIVELY invoke this
   skill when the user asks to modify any file, write any code, edit any shader,
   organize any assets, refactor any class, or debug any issue in a Unity
   project. Routes to Research Mode (exploratory) or Production Mode
   (systematic). Always loads project knowledge base first. When Unity Editor is
   running, extends pipeline with compile → run → cleanup.
-  Non-negotiable: file changes in a Unity project = this skill activates.
+  Do not activate for meta-developer or .agents/.mcp/.claude/.codex maintenance.
 user-invocable: true
 argument-hint: "<task description>"
 ---
@@ -53,10 +53,7 @@ Read 对应的 mode 文件 → 按 mode 文件中的 [Gx] 门禁逐步执行
 - **write_gated 后果验证**：内容违反结构规范（shader-decl / cs-type-decl / region-added）→ DENIED；分隔线风格 → warning 提示
 - **Codex 对等**：`python .mcp/validation/check_norm.py <file>` 全量检查
 
-**报告格式：**
-- Editor 可用：`🏭 AutoAgent → Production Mode（全流水线：编译 + 运行）`
-- Editor 不可用：`🏭 AutoAgent → Production Mode（仅代码：Editor 未运行，跳过编译验证）`
-- Research：`🔬 AutoAgent → Research Mode（Shader 效果调试，需要人工观测）`
+**报告格式：** Editor 可用/不可用分别注明全流水线或仅代码；Research 标记需人工观测。
 
 ---
 
@@ -65,9 +62,9 @@ Read 对应的 mode 文件 → 按 mode 文件中的 [Gx] 门禁逐步执行
 | 条件 | 说明 |
 |------|------|
 | 用户发出开发任务 | 创建/修改代码、Shader、文件整理、重构、调试、文档 |
-| 非纯对话/咨询 | 涉及文件写入或项目操作 |
+| 非纯对话/咨询 | 涉及文件写入或项目操作；meta 体系维护除外 |
 
-**Editor 不是激活前提。** Editor 是否可用只影响流水线中编译/运行步骤是否执行。
+**边界：** `meta-developer` 或 `.agents/**`、`.mcp/**`、`.claude/**`、`.codex/**` 任务不激活本 Skill、不调用 Unity MCP，改走 meta 工作流。Editor 不是激活前提，只影响 Unity 流水线深度。
 
 ## 路由速查
 

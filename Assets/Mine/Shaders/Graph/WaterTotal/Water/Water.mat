@@ -92,7 +92,7 @@ Material:
     - _CastShadows: 0
     - _Caustics: 1
     - _CausticsIntensity: 1
-    - _CausticsScale: 0.5
+    - _CausticsScale: 0
     - _Cull: 2
     - _DIFFUSE: 1
     - _DebugMode: 0

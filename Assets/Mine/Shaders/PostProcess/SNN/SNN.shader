@@ -2,29 +2,19 @@ Shader "Custom/SNN"
 {
     Properties
     {
-        _MainTex ("Base Color", 2D) = "white" {}
         _Radius ("Radius", Range(1,10)) = 5
     }
 
     HLSLINCLUDE
     #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-
-    struct Attributes
-    {
-        float4 positionOS : POSITION;
-        float2 uv         : TEXCOORD0;
-    };
-
-    struct Varyings
-    {
-        float4 positionCS : SV_POSITION;
-        float2 uv         : TEXCOORD0;
-    };
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
     float _Radius;
 
-    TEXTURE2D_X(_MainTex);
+    static const float2 SNNPairOffsets[4] = {
+        float2(1.0, 0.0), float2(0.0, 1.0),
+        float2(0.70710678, 0.70710678), float2(-0.70710678, 0.70710678)
+    };
 
     float ComputePixelDistance(float3 colorA, float3 colorB)
     {
@@ -32,46 +22,27 @@ Shader "Custom/SNN"
         return dot(diff, diff);
     }
 
-    Varyings Vert(Attributes input)
-    {
-        Varyings output;
-        output.positionCS = TransformObjectToHClip(input.positionOS);
-        output.uv = input.uv;
-        return output;
-    }
-
     half4 Frag_SNN(Varyings input) : SV_Target
     {
-        float2 uv = input.uv;
+        float2 uv = input.texcoord;
         float2 texelSize = 1.0 / _ScreenParams.xy;
-        float3 colorOrigin = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, uv).rgb;
+        float3 colorOrigin = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
 
-        float  radius = _Radius;
-        float3 colorSum = 0.0;
-        int count = 0;
+        float radius = max(_Radius, 0.0);
+        float3 colorSum = colorOrigin;
+        const float sampleCount = 5.0;
 
-        for (int y = 0; y <= radius; y++)
+        [unroll]
+        for (int i = 0; i < 4; i++)
         {
-            for (int x = 0; x <= radius; x++)
-            {
-                float3 colorA = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, uv + float2(x, y) * texelSize).rgb;
-                float3 colorB = SAMPLE_TEXTURE2D_X(_MainTex, sampler_LinearClamp, uv + float2(-x, -y) * texelSize).rgb;
-
-                float distA = ComputePixelDistance(colorOrigin, colorA);
-                float distB = ComputePixelDistance(colorOrigin, colorB);
-
-                if (distA < distB)
-                {
-                    colorSum += colorA;
-                }
-                else
-                {
-                    colorSum += colorB;
-                }
-                count++;
-            }
+            float2 offset = SNNPairOffsets[i] * radius * texelSize;
+            float3 colorA = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + offset).rgb;
+            float3 colorB = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - offset).rgb;
+            float distA = ComputePixelDistance(colorOrigin, colorA);
+            float distB = ComputePixelDistance(colorOrigin, colorB);
+            colorSum += distA < distB ? colorA : colorB;
         }
-        colorSum /= count;
+        colorSum /= sampleCount;
         return half4(colorSum, 1.0);
     }
 
@@ -79,8 +50,11 @@ Shader "Custom/SNN"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" }
         LOD 100
+        Cull Off
+        ZWrite Off
+        ZTest Always
 
         Pass
         {
@@ -89,6 +63,7 @@ Shader "Custom/SNN"
             Blend One Zero
 
             HLSLPROGRAM
+            #pragma target 2.0
             #pragma vertex Vert
             #pragma fragment Frag_SNN
             ENDHLSL

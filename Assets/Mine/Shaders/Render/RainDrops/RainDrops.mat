@@ -37,7 +37,7 @@ Material:
     - _Density: 30
     - _Desaturate: 0.4
     - _DropFacing: 1
-    - _DropLength: 0.873
+    - _DropLength: 0.9
     - _DropMaxSize: 0.8
     - _DropMinSize: 0.4
     - _DropSize: 0.1

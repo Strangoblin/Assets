@@ -23,6 +23,8 @@ public class StochasticSSRFeature : ScriptableRendererFeature
         [Range(0, 3)] public int resolveDownsample = 2;  // 0=full, 1=half, 2=quarter, 3=eighth
         [Range(0, 1)] public float roughness = 0.3f;
         [Range(1, 5)] public int resolveRadius = 2;
+        public enum ResolveQuality { Low, Medium, High }
+        public ResolveQuality resolveQuality = ResolveQuality.High;
         [Range(0, 1)] public float skyFallback = 0.4f;
 
         [Header("Temporal")]
@@ -85,6 +87,7 @@ public class StochasticSSRFeature : ScriptableRendererFeature
             mat.SetFloat("_Thickness", cfg.thickness);
             mat.SetFloat("_Roughness", cfg.roughness);
             mat.SetInt("_ResolveRadius", cfg.resolveRadius);
+            mat.SetInt("_ResolveQuality", (int)cfg.resolveQuality);
             mat.SetFloat("_TemporalBlend", cfg.temporalBlend);
             mat.SetFloat("_SkyFallback", cfg.skyFallback);
             mat.SetFloat("_FrameIndex", frameIndex);

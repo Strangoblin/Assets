@@ -1,6 +1,6 @@
 """G0: 框架入口 — 确认 agent 在正确上下文中."""
 
-ALLOWED_AGENTS = {"unity-developer", "meta-developer"}
+ALLOWED_AGENTS = {"unity-developer"}
 
 
 def check(ctx: dict) -> dict:

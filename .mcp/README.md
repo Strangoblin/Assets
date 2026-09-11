@@ -2,7 +2,7 @@
 
 > 后果验证门禁系统。Claude Code 通过 `.mcp.json` 自动加载。
 
----
+作用域仅限 `unity-developer` 的 Unity 业务写入。`meta-developer` 与 `.agents/.mcp/.claude/.codex` 体系维护直接绕过本 MCP，改由 meta 架构测试验收。
 
 ## 架构
 
@@ -16,11 +16,7 @@ Validation (validation/)           ← script_library.py + norms.py + check_norm
 
 三层解耦：**中心不在意门禁内容，配方不在意门禁实现，门禁只在意自身逻辑。**
 
-**v2 收敛（2026-08-25）**：门禁从「流程仪式 + 自报告」收敛为「知识证据 + 内容后果验证」——
-g_knowledge 校验声明命中真实文件；write_gated 校验写入内容符合结构规范。摩擦降到会话 2 调用，
-保证从「声称读过」变为「文件必须真符合规范」（不可伪造）；Codex 经 check_norm.py CLI 对等接入。
-
----
+**v2 收敛（2026-08-25）**：门禁从「流程仪式 + 自报告」收敛为「知识证据 + 内容后果验证」；g_knowledge 校验真实文件，write_gated 校验内容，Codex 经 check_norm.py 对等接入。
 
 ## 工具
 
@@ -36,11 +32,7 @@ g_knowledge 校验声明命中真实文件；write_gated 校验写入内容符�
 
 ## 配方
 
-链唯一——所有配方 = `[g_entry, g_knowledge]`（配方即模式声明，用于审计）。
-
-| 配方 | 门禁链 |
-|------|--------|
-| Production / Research / Experiment / Debug / Minimal / Quick | g_entry → g_knowledge |
+Production / Research / Experiment / Debug / Minimal / Quick 均使用唯一链 `g_entry → g_knowledge`；配方只声明模式并用于审计。
 
 ## 门禁
 
@@ -67,8 +59,7 @@ g_knowledge 校验声明命中真实文件；write_gated 校验写入内容符�
 | divider-added — 分隔线统一 ═ 风格 | .shader/.hlsl/.cs | warning | 仅新增行 |
 
 新增行 diff：对已存在文件只检查本次引入的行，历史遗留不合规不阻断新写入。
-规范来源：`agents/unity-developer/references/urp-shader-lib/shader-structure.md §7`、
-`csharp-dev/script-structure.md §6`。
+规范来源：`agents/unity-developer/references/urp-shader-lib/shader-structure.md §7`、`csharp-dev/script-structure.md §6`。
 
 ## Codex 对等
 

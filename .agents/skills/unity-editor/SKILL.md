@@ -1,6 +1,6 @@
 ---
 name: unity-editor
-description: Remote control Unity Editor via CLI using unityctl. Activate when user mentions Unity Editor, play mode, asset compilation, Unity console logs, C# script debugging, Unity tests, scene loading. Use for launching/stopping editor, entering/exiting play mode, compiling scripts, viewing logs, loading scenes, running tests, or executing arbitrary C# in Unity context.
+description: Control Unity Editor from the command line and choose between unityctl for a running Editor and Unity's official Editor CLI for process-owned automation. Activate for play mode, compilation, logs, tests, scenes, builds, batch mode, or Editor command-line usage.
 ---
 
 # unityctl - Unity Editor Remote Control
@@ -13,6 +13,20 @@ Run `unityctl status` first to check what's already running. If Unity is already
 
 **Platform config (Bridge + availability + troubleshooting):** [../../agents/unity-developer/AGENT.md](../../agents/unity-developer/AGENT.md)
 **Full command reference:** [../../agents/unity-developer/cli/unityctl.md](../../agents/unity-developer/cli/unityctl.md)
+
+## Choosing the CLI
+
+| Interface | Best for | Key constraint |
+|-----------|----------|----------------|
+| `unityctl` | Inspecting or controlling an already-running Editor | Requires its bridge in the same user host environment as Unity |
+| Official Unity Editor CLI | CI, builds, cold imports, tests, and `-executeMethod` jobs that own the Editor process | Starts a separate Editor process; it does not RPC into the open Editor |
+| Official `-version` | Safe installation/version probe | Prints the version without starting the Editor |
+
+Routing rules:
+
+- Prefer `unityctl` for status, scenes, play mode, logs, snapshots, and ad hoc queries against the open project.
+- Never launch a second official Editor CLI instance against a project already open; use `unityctl` or a separate project copy.
+- Discover the installed Editor path instead of hardcoding a version. For official arguments, use the [Unity Editor command-line documentation](https://docs.unity3d.com/Manual/EditorCommandLineArguments.html).
 
 ## Verifying Changes
 

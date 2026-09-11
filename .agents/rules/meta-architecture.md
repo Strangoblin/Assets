@@ -23,6 +23,12 @@ paths:
 
 判定口诀：**skills/rules 按"机制"归顶层，references/templates/memory 按"内容"归 agent**。内容归属拿不准时问"这个文件由谁加载"，不是"内容属于谁"。
 
+## Unity MCP 边界
+
+- `meta-developer` 以及 `.agents/**`、`.mcp/**`、`.claude/**`、`.codex/**` 体系维护绕过 `unity-gate`，不选择 recipe、不调用 `write_gated`。
+- Meta 直接编辑体系文件，并以交叉引用检查、`.mcp/tests/` 与 `.codex/tests/06_architecture/verify.py` 验收。
+- `Assets/Mine/**` 仍属于 Unity 业务门禁范围；切换到 `unity-developer` 后执行正常 MCP 链。
+
 ## 重复审查 — 事前清单对照（写入前必查）
 
 - 新增 reference/rule/template 前：**先 grep 全库**（含所有 agent 层）同名/同主题，已有则合并或链接，不另起新文件

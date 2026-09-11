@@ -21,6 +21,9 @@ public class KuwaharaFeature : ScriptableRendererFeature
 
         public enum KuwaharaType { Basic, Generalized, Anisotropic }
         public KuwaharaType kuwaharaType = KuwaharaType.Basic;
+
+        public enum SampleQuality { Low, Medium, High }
+        public SampleQuality sampleQuality = SampleQuality.High;
     }
 
     class KuwaharaPass : ScriptableRenderPass
@@ -83,6 +86,7 @@ public class KuwaharaFeature : ScriptableRendererFeature
             int passIndex = settings.kuwaharaType == Settings.KuwaharaType.Basic ? 0 : 1;
 
             material.SetInt("_Radius", settings.Radius);
+            material.SetInt("_SampleQuality", (int)settings.sampleQuality);
             // 单 Pass（Basic/Generalized）：Q 仅 Generalized 生效
             // Q=2 使方差线性衰减；WeightScale 控制敏感度
             material.SetFloat("_Q", 2.0f);
@@ -121,6 +125,7 @@ public class KuwaharaFeature : ScriptableRendererFeature
 
             material.SetFloat("_BlurScale", settings.downsampleLevel + 1.0f);
             material.SetInt("_Radius", settings.Radius);
+            material.SetInt("_SampleQuality", (int)settings.sampleQuality);
             material.SetFloat("_Q", settings.sharpness);
             material.SetFloat("_Hardness", settings.hardness);
             material.SetFloat("_Alpha", settings.alpha);

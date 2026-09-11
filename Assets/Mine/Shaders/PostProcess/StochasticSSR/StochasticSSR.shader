@@ -12,7 +12,7 @@ Shader "Hidden/CelToon/StochasticSSR"
 
     float _StepSize, _MaxDistance, _Thickness, _Roughness, _TemporalBlend, _FrameIndex;
     float _SkyFallback;
-    int _StepCount, _ResolveRadius;
+    int _StepCount, _ResolveRadius, _ResolveQuality;
     float4 _ResolveTexelSize;   // resolve RT 的 texel size（低分辨率 gather 步长）
 
     float4x4 _CameraViewMatrix, _CameraProjectionMatrix;
@@ -117,6 +117,37 @@ Shader "Hidden/CelToon/StochasticSSR"
 
     TEXTURE2D_X(_TraceTex);
 
+    static const float2 ResolveOffsets[25] = {
+        float2(-1,-1), float2(-0.5,-1), float2(0,-1), float2(0.5,-1), float2(1,-1),
+        float2(-1,-0.5), float2(-0.5,-0.5), float2(0,-0.5), float2(0.5,-0.5), float2(1,-0.5),
+        float2(-1,0), float2(-0.5,0), float2(0,0), float2(0.5,0), float2(1,0),
+        float2(-1,0.5), float2(-0.5,0.5), float2(0,0.5), float2(0.5,0.5), float2(1,0.5),
+        float2(-1,1), float2(-0.5,1), float2(0,1), float2(0.5,1), float2(1,1)
+    };
+    int ResolveSampleCount() { return _ResolveQuality <= 0 ? 9 : (_ResolveQuality == 1 ? 16 : 25); }
+    float2 ResolveOffset(int i)
+    {
+        if (_ResolveQuality <= 0)
+        {
+            static const float2 low[9] = {
+                float2(-1,-1), float2(0,-1), float2(1,-1), float2(-1,0), float2(0,0),
+                float2(1,0), float2(-1,1), float2(0,1), float2(1,1)
+            };
+            return low[i];
+        }
+        if (_ResolveQuality == 1)
+        {
+            static const float2 medium[16] = {
+                float2(-1,-1), float2(-0.3333,-1), float2(0.3333,-1), float2(1,-1),
+                float2(-1,-0.3333), float2(-0.3333,-0.3333), float2(0.3333,-0.3333), float2(1,-0.3333),
+                float2(-1,0.3333), float2(-0.3333,0.3333), float2(0.3333,0.3333), float2(1,0.3333),
+                float2(-1,1), float2(-0.3333,1), float2(0.3333,1), float2(1,1)
+            };
+            return medium[i];
+        }
+        return ResolveOffsets[i];
+    }
+
     half4 Frag_Resolve(Varyings input) : SV_Target
     {
         float2 uv = input.texcoord;
@@ -131,10 +162,11 @@ Shader "Hidden/CelToon/StochasticSSR"
 
         float4 gathered = 0; float totalW = 0;
         int r = _ResolveRadius;
-        [loop] for (int dy = -r; dy <= r; dy++)
-        [loop] for (int dx = -r; dx <= r; dx++)
+        int sampleCount = ResolveSampleCount();
+        [loop] for (int i = 0; i < 25; i++)
         {
-            float2 suv = uv + float2(dx, dy) * ts;
+            if (i >= sampleCount) continue;
+            float2 suv = uv + ResolveOffset(i) * r * ts;
             if (suv.x < 0 || suv.x > 1 || suv.y < 0 || suv.y > 1) continue;
             float4 hit = SAMPLE_TEXTURE2D_X(_TraceTex, sampler_LinearClamp, suv);
             if (hit.a < 1e-4) continue;

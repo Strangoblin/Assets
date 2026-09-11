@@ -8,6 +8,8 @@
 
 | 文件 | 日期 | 摘要 |
 |------|------|------|
+| [2026-09-10-meta-mcp-bypass.md](2026-09-10-meta-mcp-bypass.md) | 2026-09-10 | meta-developer 与体系路径绕过 Unity MCP；g_entry 收紧为 unity-developer，并新增边界回归测试 |
+| [2026-09-10-unity-cli-routing.md](2026-09-10-unity-cli-routing.md) | 2026-09-10 | unity-editor skill 增加官方 Editor CLI 与 unityctl 的选择边界、同项目双实例安全约束及适配同步说明 |
 | [2026-09-04-agent-architecture-cutover.md](2026-09-04-agent-architecture-cutover.md) | 2026-09-04 | 架构解耦收尾 P0-P3 + skills 软链切流（已执行 fdf9106，人工确认） — 最终验收全绿（fixture phase7） |
 | [2026-09-04-codex-compatibility-links.md](2026-09-04-codex-compatibility-links.md) | 2026-09-04 | Codex 适配层补齐指向 `.agents/` 的相对软链，并加入架构契约测试 |
 | [2026-09-04-codex-agent-temp-cleanup.md](2026-09-04-codex-agent-temp-cleanup.md) | 2026-09-04 | 退役 Codex exec/auto 替代 agent，清理临时产物并将长期知识归档到共享 memory |

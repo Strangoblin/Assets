@@ -10,6 +10,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # .mcp/
 sys.path.insert(0, ROOT)
 
 from gate_center import RECIPES, GATE_REGISTRY, RETIRED_GATES
+from gates.g_entry import ALLOWED_AGENTS
+from validation.project_paths import validate_path
 
 TMP = os.path.join(os.path.dirname(ROOT), "tmp")   # 项目根/tmp
 
@@ -52,6 +54,8 @@ HIGH_PRIO = "unity/standard/shader/shader-structure.md, unity/standard/script/sc
 
 def self_check():
     """注册表自检 — 链统一 / 退役门禁不在配方 / requires 一致. 违反即回归."""
+    assert ALLOWED_AGENTS == {"unity-developer"}, \
+        f"Unity MCP 只允许 unity-developer，当前: {ALLOWED_AGENTS}"
     assert set(RECIPES) == {"Production", "Research", "Experiment", "Debug", "Minimal", "Quick"}, \
         f"配方集合异常: {set(RECIPES)}"
     for recipe, gates in RECIPES.items():
@@ -67,6 +71,17 @@ def self_check():
         assert g not in [x for gates in RECIPES.values() for x in gates], \
             f"退役门禁 '{g}' 不应出现在任何配方中"
     print("  ✅ 自检通过: 链统一 / 退役集合 / requires 一致")
+
+
+async def test_meta_bypass_boundary():
+    print("\n── Meta 边界: 不进入 Unity MCP ──")
+    await call("gate_reset")
+    await call("gate_set_recipe", name="Production")
+    r = await call("gate_pass", gate_id="g_entry", agent="meta-developer")
+    assert r["status"] == "DENIED" and r["error"] == "G0_FAILED", f"got {r}"
+    r = validate_path(".agents/agents/meta-developer/AGENT.md")
+    assert r["status"] == "DENIED" and r["error"] == "PATH_NOT_ALLOWED", f"got {r}"
+    print("  ✅ meta-developer 与 .agents 路径均不进入 Unity MCP")
 
 
 async def test_production_chain():
@@ -295,6 +310,7 @@ async def main():
     print("\n── Self-check (registry invariants) ──")
     self_check()
 
+    await test_meta_bypass_boundary()
     await test_production_chain()
     await test_knowledge_fabricated()
     await test_knowledge_reference_impl()

@@ -27,6 +27,46 @@ Shader "Hidden/Kuwahara"
     #define _N 8
     #define _ZERO_CROSS 0.58
 
+    // 固定 5x5 采样核。半径只缩放采样范围，不增加纹理读取次数。
+    // 与 BlurFunction 的固定 tap 思路一致，最大偏移为 ±Radius。
+    static const float2 KuwaharaSampleOffsets[25] = {
+        float2(-1.0, -1.0), float2(-0.5, -1.0), float2(0.0, -1.0), float2(0.5, -1.0), float2(1.0, -1.0),
+        float2(-1.0, -0.5), float2(-0.5, -0.5), float2(0.0, -0.5), float2(0.5, -0.5), float2(1.0, -0.5),
+        float2(-1.0,  0.0), float2(-0.5,  0.0), float2(0.0,  0.0), float2(0.5,  0.0), float2(1.0,  0.0),
+        float2(-1.0,  0.5), float2(-0.5,  0.5), float2(0.0,  0.5), float2(0.5,  0.5), float2(1.0,  0.5),
+        float2(-1.0,  1.0), float2(-0.5,  1.0), float2(0.0,  1.0), float2(0.5,  1.0), float2(1.0,  1.0)
+    };
+
+    int _SampleQuality; // 0: Low(9), 1: Medium(16), 2: High(25)
+    int KuwaharaSampleCount()
+    {
+        return _SampleQuality <= 0 ? 9 : (_SampleQuality == 1 ? 16 : 25);
+    }
+
+    float2 KuwaharaSampleOffset(int index)
+    {
+        if (_SampleQuality <= 0)
+        {
+            static const float2 low[9] = {
+                float2(-1,-1), float2(0,-1), float2(1,-1),
+                float2(-1, 0), float2(0, 0), float2(1, 0),
+                float2(-1, 1), float2(0, 1), float2(1, 1)
+            };
+            return low[index];
+        }
+        if (_SampleQuality == 1)
+        {
+            static const float2 medium[16] = {
+                float2(-1,-1), float2(-0.3333,-1), float2(0.3333,-1), float2(1,-1),
+                float2(-1,-0.3333), float2(-0.3333,-0.3333), float2(0.3333,-0.3333), float2(1,-0.3333),
+                float2(-1,0.3333), float2(-0.3333,0.3333), float2(0.3333,0.3333), float2(1,0.3333),
+                float2(-1,1), float2(-0.3333,1), float2(0.3333,1), float2(1,1)
+            };
+            return medium[index];
+        }
+        return KuwaharaSampleOffsets[index];
+    }
+
     // ── 权重公式（Generalized & Aniso 共用） ──
     //   w = 1 / (1 + pow(var * H * Scale, Q * 0.5))
     //   Scale 由 C# 按模式设定:
@@ -45,7 +85,7 @@ Shader "Hidden/Kuwahara"
     {
         float2 uv = input.texcoord;
         float2 texelSize = 1.0 / _ScreenParams.xy;
-        int radius = _Radius;
+        float radius = max((float)_Radius, 1.0);
 
         float3 mean[4];
         float3 meanSq[4];
@@ -57,26 +97,24 @@ Shader "Hidden/Kuwahara"
             count[i] = 0;
         }
 
+        int sampleCount = KuwaharaSampleCount();
         [loop]
-        for (int y = -radius; y <= radius; y++)
+        for (int i = 0; i < 25; i++)
         {
-            [loop]
-            for (int x = -radius; x <= radius; x++)
-            {
-                if (x * x + y * y > radius * radius) continue;
-                int region = 0;
-                float2 sampleUV = uv + float2(x, y) * texelSize;
-                float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
+            if (i >= sampleCount) continue;
+            float2 p = KuwaharaSampleOffset(i) * radius;
+            int region = 0;
+            float2 sampleUV = uv + p * texelSize;
+            float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
 
-                if (x >= 0 && y >= 0) region = 0;
-                else if (x < 0 && y > 0) region = 1;
-                else if (x < 0 && y < 0) region = 2;
-                else region = 3;
+            if (p.x >= 0 && p.y >= 0) region = 0;
+            else if (p.x < 0 && p.y > 0) region = 1;
+            else if (p.x < 0 && p.y < 0) region = 2;
+            else region = 3;
 
-                mean[region] += sampleColor;
-                meanSq[region] += sampleColor * sampleColor;
-                count[region]++;
-            }
+            mean[region] += sampleColor;
+            meanSq[region] += sampleColor * sampleColor;
+            count[region]++;
         }
 
         float3 finalColor = float3(0,0,0);
@@ -107,7 +145,7 @@ Shader "Hidden/Kuwahara"
     {
         float2 uv = input.texcoord;
         float2 texelSize = 1.0 / _ScreenParams.xy;
-        int radius = _Radius;
+        float radius = max((float)_Radius, 1.0);
 
         float3 mean[8];
         float3 meanSq[8];
@@ -119,24 +157,22 @@ Shader "Hidden/Kuwahara"
             count[i] = 0;
         }
 
+        int sampleCount = KuwaharaSampleCount();
         [loop]
-        for (int y = -radius; y <= radius; y++)
+        for (int i = 0; i < 25; i++)
         {
-            [loop]
-            for (int x = -radius; x <= radius; x++)
-            {
-                int region = 0;
-                float2 sampleUV = uv + float2(x, y) * texelSize;
-                float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
+            if (i >= sampleCount) continue;
+            float2 p = KuwaharaSampleOffset(i) * radius;
+            float2 sampleUV = uv + p * texelSize;
+            float3 sampleColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUV).rgb;
 
-                float angleUV = atan2((float)y, (float)x);
-                float angleRegion = 3.14159265 / 4.0;
-                region = (int)floor((angleUV + 3.14159265) / angleRegion) % 8;
+            float angleUV = atan2(p.y, p.x);
+            float angleRegion = 3.14159265 / 4.0;
+            int region = (int)floor((angleUV + 3.14159265) / angleRegion) % 8;
 
-                mean[region] += sampleColor;
-                meanSq[region] += sampleColor * sampleColor;
-                count[region]++;
-            }
+            mean[region] += sampleColor;
+            meanSq[region] += sampleColor * sampleColor;
+            count[region]++;
         }
 
         float3 finalColor = float3(0,0,0);
@@ -256,44 +292,44 @@ Shader "Hidden/Kuwahara"
         }
 
         [loop]
-        for (int y = -max_y; y <= max_y; ++y)
+        for (int i = 0; i < 25; ++i)
         {
-            [loop]
-            for (int x = -max_x; x <= max_x; ++x)
+            if (i >= KuwaharaSampleCount()) continue;
+
+            float2 normalizedOffset = KuwaharaSampleOffset(i);
+            float2 pixelOffset = normalizedOffset * float2(max_x, max_y);
+            float2 v = mul(SR, pixelOffset);
+            if (dot(v, v) <= 0.25)
             {
-                float2 v = mul(SR, float2(x, y));
-                if (dot(v, v) <= 0.25)
+                float3 c = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp,
+                    input.texcoord + pixelOffset * texelSize).rgb;
+                c = saturate(c);
+
+                float sum = 0;
+                float w[_N];
+
+                float vxx = zeta - eta * v.x * v.x;
+                float vyy = zeta - eta * v.y * v.y;
+                float z = max(0, v.y + vxx); w[0] = z * z; sum += w[0];
+                z = max(0, -v.x + vyy); w[2] = z * z; sum += w[2];
+                z = max(0, -v.y + vxx); w[4] = z * z; sum += w[4];
+                z = max(0, v.x + vyy);  w[6] = z * z; sum += w[6];
+
+                v = 0.70710678 * float2(v.x - v.y, v.x + v.y);
+                vxx = zeta - eta * v.x * v.x;
+                vyy = zeta - eta * v.y * v.y;
+                z = max(0, v.y + vxx); w[1] = z * z; sum += w[1];
+                z = max(0, -v.x + vyy); w[3] = z * z; sum += w[3];
+                z = max(0, -v.y + vxx); w[5] = z * z; sum += w[5];
+                z = max(0, v.x + vyy);  w[7] = z * z; sum += w[7];
+
+                float g = exp(-3.125 * dot(v, v)) / max(sum, 1e-5);
+
+                for (int k = 0; k < _N; ++k)
                 {
-                    float3 c = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp,
-                        input.texcoord + float2(x, y) * texelSize).rgb;
-                    c = saturate(c);
-
-                    float sum = 0;
-                    float w[_N];
-
-                    float vxx = zeta - eta * v.x * v.x;
-                    float vyy = zeta - eta * v.y * v.y;
-                    float z = max(0, v.y + vxx); w[0] = z * z; sum += w[0];
-                    z = max(0, -v.x + vyy); w[2] = z * z; sum += w[2];
-                    z = max(0, -v.y + vxx); w[4] = z * z; sum += w[4];
-                    z = max(0, v.x + vyy);  w[6] = z * z; sum += w[6];
-
-                    v = 0.70710678 * float2(v.x - v.y, v.x + v.y);
-                    vxx = zeta - eta * v.x * v.x;
-                    vyy = zeta - eta * v.y * v.y;
-                    z = max(0, v.y + vxx); w[1] = z * z; sum += w[1];
-                    z = max(0, -v.x + vyy); w[3] = z * z; sum += w[3];
-                    z = max(0, -v.y + vxx); w[5] = z * z; sum += w[5];
-                    z = max(0, v.x + vyy);  w[7] = z * z; sum += w[7];
-
-                    float g = exp(-3.125 * dot(v, v)) / sum;
-
-                    for (int k = 0; k < _N; ++k)
-                    {
-                        float wk = w[k] * g;
-                        m[k] += float4(c * wk, wk);
-                        s[k] += c * c * wk;
-                    }
+                    float wk = w[k] * g;
+                    m[k] += float4(c * wk, wk);
+                    s[k] += c * c * wk;
                 }
             }
         }

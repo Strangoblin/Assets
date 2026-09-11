@@ -79,9 +79,10 @@ MonoBehaviour:
   - {fileID: 223963607245372406}
   - {fileID: 7840093813185564073}
   - {fileID: 6441417510976136481}
-  - {fileID: 2745651929196574248}
   - {fileID: -6861971581733455524}
-  m_RendererFeatureMap: ad6b866f10d7b46cf6bb79d4b6ad1b03a9cda9d4c89bcd6c21a5b61f1983645928b6a0ece1831a26
+  - {fileID: 2655601917037982463}
+  - {fileID: 578360139530883197}
+  m_RendererFeatureMap: ad6b866f10d7b46cf6bb79d4b6ad1b03a9cda9d4c89bcd6c21a5b61f198364595cb9f3e33361c5a0ff32e5a1df97da247dd0fb8c7bbf0608
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -130,6 +131,42 @@ MonoBehaviour:
     flipFade: 0.05
     smoothness: 1
     showReflection: 1
+--- !u!114 &578360139530883197
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1ee3ee184c99f24884c764a42088423, type: 3}
+  m_Name: SNNFeature
+  m_EditorClassIdentifier: Assembly-CSharp::SNNFeature
+  m_Active: 0
+  settings:
+    snnShader: {fileID: 4800000, guid: 799e757eaa382aa40a8658978998d8f0, type: 3}
+    Radius: 4
+--- !u!114 &2655601917037982463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b00045f12942b46c698459096c89274e, type: 3}
+  m_Name: Snowy Experiment
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FullScreenPassRendererFeature
+  m_Active: 0
+  injectionPoint: 600
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: 07f3e8d2e3d944e28a515136dcc4ea06, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &2669520963029075480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -148,40 +185,6 @@ MonoBehaviour:
   m_OutlineMaskShader: {fileID: 4800000, guid: 77dbc5093879244678321644aa36838a, type: 3}
   m_OutlineCompositeShader: {fileID: 4800000, guid: 3883a59e5182c4610a2e368619444f0c, type: 3}
   m_DebugShowMask: 0
---- !u!114 &2745651929196574248
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 936499e87f5826348ad143299eddd983, type: 3}
-  m_Name: SSOFeature
-  m_EditorClassIdentifier: Assembly-CSharp::SSOFeature
-  m_Active: 0
-  settings:
-    ssoShader: {fileID: 4800000, guid: a2f57ac10d03f674caf4d7c2be4fbac5, type: 3}
-    ssoType: 1
-    depthParams:
-      intensity: 1
-      thickness: 1
-      threshold: {x: 0.1, y: 0.2}
-    normalParams:
-      intensity: 1
-      thickness: 1
-      threshold: {x: 0.1, y: 0.2}
-    shadowParams:
-      shadowType: 2
-      Intensity: 0.5
-      Sharpness: 1
-      Thickness: 0.1
-      Density: 0.5
-    jitter: 1
-    downsample: 0
-    OutlineColor: {r: 1, g: 1, b: 1, a: 1}
-    SSOFeature: 1
 --- !u!114 &4655793570601728598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,6 +276,7 @@ MonoBehaviour:
     resolveDownsample: 2
     roughness: 0
     resolveRadius: 2
+    resolveQuality: 2
     skyFallback: 0.4
     temporalBlend: 0.9
     debug: 0

@@ -123,8 +123,6 @@ public class SSCFeature : ScriptableRendererFeature
             TextureHandle sscRT = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph, desc, "_SSCResultRT", false);
 
-            // ── 设置 _MainTex（shader 直接采样）──
-            sscMaterial.SetTexture("_MainTex", tempMainRT);
             sscMaterial.SetTexture("_SSCTex", sscRT);
 
             using (var builder = renderGraph.AddUnsafePass<PassData>("SSC", out var passData))
@@ -144,7 +142,7 @@ public class SSCFeature : ScriptableRendererFeature
                 {
                     CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
 
-                    // Copy source → tempMain (uses cmd.SetGlobalTexture("_MainTex") below)
+                    // Copy source → tempMain for the composite input.
                     Blitter.BlitCameraTexture(cmd, data.source, data.tempMainRT);
 
                     // Pass 0: Ray march → sscRT
